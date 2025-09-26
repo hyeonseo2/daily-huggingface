@@ -1,0 +1,16 @@
+# daily-huggingface/docker-compose.yml
+version: "3.9"
+services:
+  daily-huggingface:
+    build: .
+    container_name: daily-huggingface
+    environment:
+      # 선택: 토큰/엔드포인트/요약용 키
+      HF_TOKEN: "${HF_TOKEN}"
+      MCP_URL: "${MCP_URL}"             # 예: https://mcp.yourdomain/mcp (없어도 동작)
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"  # 요약문 옵션
+      NEWSLETTER_TOP_N: "12"
+      TZ: "Asia/Seoul"
+    volumes:
+      - ./out:/data
+    restart: "no"

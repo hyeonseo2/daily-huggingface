@@ -1,0 +1,53 @@
+name: Daily HuggingFace (PR)
+
+on:
+  schedule:
+    - cron: '0 23 * * *'   # KST 08:00
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          MCP_URL: ${{ secrets.MCP_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEWSLETTER_TOP_N: "12"
+          TZ: "Asia/Seoul"
+        run: |
+          python -m app.main
+          # GH Actions에서는 리포에 커밋/PR하려면 repo 경로에 파일이 있어야 하므로,
+          # 컨테이너 없이 로컬 실행 경로로 한 번 더 저장하려면 app/main.py 수정이 필요.
+          # (여기 워크플로우는 Docker 없이 순수 Python 실행을 가정)
+          # 결과 파일명을 파악하려면 동일한 날짜 규칙으로 계산:
+          pydate=$(python -c "from datetime import datetime,timezone,timedelta;print(datetime.now(timezone(timedelta(hours=9))).date().isoformat())")
+          echo "NEWSLETTER_FILENAME=daily-huggingface-${pydate}.md" >> $GITHUB_ENV
+          # 컨테이너 모드가 아니라서 out 디렉터리 생성 후 복사
+          mkdir -p newsletters
+          mv "/data/daily-huggingface-${pydate}.md" "newsletters/daily-huggingface-${pydate}.md"
+
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(daily-huggingface): add ${{ env.NEWSLETTER_FILENAME }}"
+          title: "Daily HuggingFace: ${{ env.NEWSLETTER_FILENAME }}"
+          body: "Automated daily newsletter."
+          branch: "chore/dhf/${{ env.NEWSLETTER_FILENAME }}"
+          base: "main"
+          add-paths: |
+            newsletters/${{ env.NEWSLETTER_FILENAME }}
