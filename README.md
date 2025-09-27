@@ -24,7 +24,8 @@ docker build -t daily-huggingface .
 ### 2. 실행
 
 ```bash
-# 결과는 ./out/daily-huggingface-YYYY-MM-DD.md 로 생성
+# 애플리케이션은 기본적으로 <repo>/newsletters/에 결과를 저장하며,
+# 아래 Docker 예시는 호스트 볼륨 마운트를 위해 /data로 경로를 덮어씁니다.
 mkdir -p out
 docker run --rm \
   -e HF_TOKEN="hf_xxxxxxxxx" \
@@ -37,6 +38,7 @@ docker run --rm \
 
 빠르게 동작 확인을 하고 싶다면:
 
+기본 출력은 `<repo>/newsletters/`이지만, 아래 명령은 Docker 예시와 같이 `/data`로 재정의합니다.
 ```bash
 docker run --rm \
   -e HF_TOKEN="hf_xxxxxxxxx" \
@@ -53,7 +55,7 @@ docker run --rm \
 HF_TOKEN set? YES
 MCP_URL set?  NO
 TOP_N: 6
-Output: /data/_test-daily-huggingface-2025-09-26.md
+Output: /data/_test-daily-huggingface-2025-09-26.md (Docker 예시에서는 /data, 기본은 <repo>/newsletters/)
 Models:   6
 Datasets: 6
 Spaces:   6
@@ -97,6 +99,9 @@ services:
       - ./out:/data
     restart: "no"
 ```
+
+위 설정 역시 Docker 컨테이너 내부 경로를 `/data`로 고정해 호스트의 `./out`을 마운트하며,
+애플리케이션의 기본 출력 디렉터리인 `<repo>/newsletters/`를 덮어씁니다.
 
 실행:
 
