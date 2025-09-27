@@ -1,6 +1,7 @@
 # app/main.py
 import os
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
 from .agent import DailyHuggingFaceAgent
 from .render import render_md
@@ -27,12 +28,13 @@ def main():
     date_str = _today_kst_str()
     filename = f"daily-huggingface-{date_str}.md"
 
-    # 컨테이너 내부 출력 경로
-    out_dir = "/data"
-    os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, filename)
+    default_out_dir = Path(__file__).resolve().parents[1] / "newsletters"
+    out_dir_env = os.getenv("NEWSLETTER_OUTPUT_DIR")
+    out_dir = Path(out_dir_env).expanduser() if out_dir_env else default_out_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / filename
 
-    render_md(models, datasets, spaces, summaries, date_str=date_str, out_path=out_path)
+    render_md(models, datasets, spaces, summaries, date_str=date_str, out_path=str(out_path))
     print(f"[daily-huggingface] generated {out_path}")
 
 if __name__ == "__main__":

@@ -29,6 +29,7 @@ jobs:
           MCP_URL: ${{ secrets.MCP_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           NEWSLETTER_TOP_N: "12"
+          NEWSLETTER_OUTPUT_DIR: "${{ github.workspace }}/newsletters"
           TZ: "Asia/Seoul"
         run: |
           python -m app.main
@@ -38,9 +39,6 @@ jobs:
           # 결과 파일명을 파악하려면 동일한 날짜 규칙으로 계산:
           pydate=$(python -c "from datetime import datetime,timezone,timedelta;print(datetime.now(timezone(timedelta(hours=9))).date().isoformat())")
           echo "NEWSLETTER_FILENAME=daily-huggingface-${pydate}.md" >> $GITHUB_ENV
-          # 컨테이너 모드가 아니라서 out 디렉터리 생성 후 복사
-          mkdir -p newsletters
-          mv "/data/daily-huggingface-${pydate}.md" "newsletters/daily-huggingface-${pydate}.md"
 
       - uses: peter-evans/create-pull-request@v6
         with:
