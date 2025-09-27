@@ -22,10 +22,11 @@ docker build -t daily-huggingface .
 ### 2. 실행
 
 ```bash
-# 결과는 ./out/daily-huggingface-YYYY-MM-DD.md 로 생성
+# 기본 출력 경로는 컨테이너 내부 `/data` (호스트의 `./out` 볼륨)
 mkdir -p out
 docker run --rm \
   -e HF_TOKEN="hf_xxxxxxxxx" \
+  -e NEWSLETTER_OUTPUT_DIR="/data" \
   -v "$(pwd)/out:/data" \
   daily-huggingface
 ```
@@ -37,6 +38,7 @@ docker run --rm \
 ```bash
 docker run --rm \
   -e HF_TOKEN="hf_xxxxxxxxx" \
+  -e NEWSLETTER_OUTPUT_DIR="/data" \
   -v "$(pwd)/out:/data" \
   --entrypoint python \
   daily-huggingface -m app.smoke_test
@@ -69,6 +71,7 @@ Spaces:   6
 | `MCP_URL`          | Hugging Face MCP 서버 `/mcp` 엔드포인트   | 선택 | 없음         |
 | `OPENAI_API_KEY`   | OpenAI API 키 (요약문 생성에 사용)          | 선택 | 없음         |
 | `NEWSLETTER_TOP_N` | 섹션별 항목 수                           | 선택 | 12         |
+| `NEWSLETTER_OUTPUT_DIR` | 뉴스레터 Markdown 파일 저장 경로         | 선택 | `<repo>/newsletters` |
 | `TZ`               | 타임존                                | 선택 | Asia/Seoul |
 
 ---
@@ -86,6 +89,7 @@ services:
       MCP_URL: "${MCP_URL}"
       OPENAI_API_KEY: "${OPENAI_API_KEY}"
       NEWSLETTER_TOP_N: "12"
+      NEWSLETTER_OUTPUT_DIR: "/data"
       TZ: "Asia/Seoul"
     volumes:
       - ./out:/data

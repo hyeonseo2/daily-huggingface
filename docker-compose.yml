@@ -10,6 +10,7 @@ services:
       MCP_URL: "${MCP_URL}"             # 예: https://mcp.yourdomain/mcp (없어도 동작)
       OPENAI_API_KEY: "${OPENAI_API_KEY}"  # 요약문 옵션
       NEWSLETTER_TOP_N: "12"
+      NEWSLETTER_OUTPUT_DIR: "/data"
       TZ: "Asia/Seoul"
     volumes:
       - ./out:/data
