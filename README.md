@@ -1,7 +1,9 @@
 # 📰 Daily HuggingFace
 
-매일 Hugging Face의 **인기 모델 / 트렌딩 데이터셋 / 트렌딩 스페이스**를 모아  
-Markdown 뉴스레터 파일(`daily-huggingface-YYYY-MM-DD.md`)을 생성합니다.
+매일 Hugging Face의 **인기 모델 / 트렌딩 데이터셋 / 트렌딩 스페이스**를 모아
+Markdown 뉴스레터 파일(`daily-huggingface-YYYY-MM-DD.md`)을 생성합니다. 기본적으로
+`app.main`은 리포지토리의 `newsletters/` 디렉터리에 파일을 저장하며, 환경 변수
+`NEWSLETTER_OUTPUT_DIR`로 다른 경로로 변경할 수 있습니다.
 
 - **기본 데이터 소스**: Hugging Face REST API
 - **선택적으로** Hugging Face MCP 서버(`MCP_URL`)를 함께 사용
@@ -26,6 +28,7 @@ docker build -t daily-huggingface .
 mkdir -p out
 docker run --rm \
   -e HF_TOKEN="hf_xxxxxxxxx" \
+  -e NEWSLETTER_OUTPUT_DIR="/data" \
   -v "$(pwd)/out:/data" \
   daily-huggingface
 ```
@@ -37,6 +40,7 @@ docker run --rm \
 ```bash
 docker run --rm \
   -e HF_TOKEN="hf_xxxxxxxxx" \
+  -e NEWSLETTER_OUTPUT_DIR="/data" \
   -v "$(pwd)/out:/data" \
   --entrypoint python \
   daily-huggingface -m app.smoke_test
@@ -67,6 +71,7 @@ Spaces:   6
 | ------------------ | ---------------------------------- | -- | ---------- |
 | `HF_TOKEN`         | Hugging Face 토큰 (레이트리밋 완화/프라이빗 접근) | 선택 | 없음         |
 | `MCP_URL`          | Hugging Face MCP 서버 `/mcp` 엔드포인트   | 선택 | 없음         |
+| `NEWSLETTER_OUTPUT_DIR` | 뉴스레터 파일 출력 디렉터리              | 선택 | `newsletters/` |
 | `OPENAI_API_KEY`   | OpenAI API 키 (요약문 생성에 사용)          | 선택 | 없음         |
 | `NEWSLETTER_TOP_N` | 섹션별 항목 수                           | 선택 | 12         |
 | `TZ`               | 타임존                                | 선택 | Asia/Seoul |
@@ -86,6 +91,7 @@ services:
       MCP_URL: "${MCP_URL}"
       OPENAI_API_KEY: "${OPENAI_API_KEY}"
       NEWSLETTER_TOP_N: "12"
+      NEWSLETTER_OUTPUT_DIR: "/data"
       TZ: "Asia/Seoul"
     volumes:
       - ./out:/data
