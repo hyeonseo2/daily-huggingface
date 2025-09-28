@@ -1,6 +1,6 @@
 # app/agent.py
 import os, math, json, datetime
-from typing import List, Dict, Any, Optional, Iterable
+from typing import List, Dict, Any, Optional, Iterable, Tuple
 
 from .tools import hf_api
 from .tools import mcp_client as mcp
@@ -31,22 +31,23 @@ class DailyHuggingFaceAgent:
     def __init__(self, top_n: int = 12):
         self.top_n = top_n
 
-    def _filter_recent(self, items: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Return the top-N items prioritising entries updated within seven days."""
+    @staticmethod
+    def _parse_ts(value: Optional[str]) -> Optional[datetime.datetime]:
+        if not value:
+            return None
+        try:
+            if value.endswith("Z"):
+                value = value.replace("Z", "+00:00")
+            dt = datetime.datetime.fromisoformat(value)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=datetime.timezone.utc)
+            return dt.astimezone(datetime.timezone.utc)
+        except Exception:
+            return None
 
-        def _parse_ts(value: Optional[str]) -> Optional[datetime.datetime]:
-            if not value:
-                return None
-            try:
-                if value.endswith("Z"):
-                    value = value.replace("Z", "+00:00")
-                dt = datetime.datetime.fromisoformat(value)
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=datetime.timezone.utc)
-                return dt.astimezone(datetime.timezone.utc)
-            except Exception:
-                return None
-
+    def _split_recent_stale(
+        self, items: Iterable[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         now = datetime.datetime.now(datetime.timezone.utc)
         recent: List[Dict[str, Any]] = []
         stale: List[Dict[str, Any]] = []
@@ -58,11 +59,18 @@ class DailyHuggingFaceAgent:
                 or item.get("lastModifiedAt")
                 or item.get("createdAt")
             )
-            dt = _parse_ts(ts)
+            dt = self._parse_ts(ts)
             if dt and (now - dt).days <= 7:
                 recent.append(item)
             else:
                 stale.append(item)
+
+        return recent, stale
+
+    def _filter_recent(self, items: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Return the top-N items prioritising entries updated within seven days."""
+
+        recent, stale = self._split_recent_stale(items)
 
         def _sort(items_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             return sorted(items_list, key=_score, reverse=True)
@@ -73,6 +81,20 @@ class DailyHuggingFaceAgent:
             needed = self.top_n - len(ordered)
             ordered.extend(_sort(stale)[:needed])
         return ordered
+
+    @staticmethod
+    def _merge_unique(
+        primary: List[Dict[str, Any]], secondary: Iterable[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        seen = {item["id"] for item in primary}
+        merged = list(primary)
+        for item in secondary or []:
+            item_id = item.get("id")
+            if not item_id or item_id in seen:
+                continue
+            merged.append(item)
+            seen.add(item_id)
+        return merged
 
     # ---- 수집 ----
     def top_models(self) -> List[Dict[str, Any]]:
@@ -99,37 +121,60 @@ class DailyHuggingFaceAgent:
                     return filtered[: self.top_n]
         except Exception:
             pass
-        # 2) 폴백: REST
-        raw = hf_api.top_models_by_downloads(limit=self.top_n * 5)
-        norm = hf_api.normalize_items(raw, id_key="modelId")
-        filtered = self._filter_recent(norm)
+        # 2) 폴백: REST - 최근 정렬 우선
+        recent_raw = hf_api.recent_models(limit=self.top_n * 5)
+        combined = hf_api.normalize_items(recent_raw, id_key="modelId")
+        recent_bucket, _ = self._split_recent_stale(combined)
+        if len(combined) < self.top_n or not recent_bucket:
+            downloads_raw = hf_api.top_models_by_downloads(limit=self.top_n * 5)
+            downloads_norm = hf_api.normalize_items(downloads_raw, id_key="modelId")
+            combined = self._merge_unique(combined, downloads_norm)
+        filtered = self._filter_recent(combined)
         return filtered[: self.top_n]
 
     def trending_datasets(self) -> List[Dict[str, Any]]:
+        combined: List[Dict[str, Any]] = []
+
         # 1) 트렌딩 시도
         raw = hf_api.trending("dataset", limit=self.top_n * 5)
         if raw:
-            norm = hf_api.normalize_items(raw, id_key="id")
-            filtered = self._filter_recent(norm)
-            if filtered:
-                return filtered[: self.top_n]
-        # 2) 폴백: 다운로드 정렬
-        alt = hf_api.top_datasets_by_downloads(limit=self.top_n * 5)
-        norm_alt = hf_api.normalize_items(alt, id_key="id")
-        return self._filter_recent(norm_alt)[: self.top_n]
+            combined = hf_api.normalize_items(raw, id_key="id")
+
+        recent_bucket, _ = self._split_recent_stale(combined)
+        if len(combined) < self.top_n or not recent_bucket:
+            recent_raw = hf_api.recent_datasets(limit=self.top_n * 5)
+            recent_norm = hf_api.normalize_items(recent_raw, id_key="id")
+            combined = self._merge_unique(combined, recent_norm)
+
+        recent_bucket, _ = self._split_recent_stale(combined)
+        if len(combined) < self.top_n or not recent_bucket:
+            alt = hf_api.top_datasets_by_downloads(limit=self.top_n * 5)
+            norm_alt = hf_api.normalize_items(alt, id_key="id")
+            combined = self._merge_unique(combined, norm_alt)
+
+        return self._filter_recent(combined)[: self.top_n]
 
     def trending_spaces(self) -> List[Dict[str, Any]]:
+        combined: List[Dict[str, Any]] = []
+
         # 1) 트렌딩 시도
         raw = hf_api.trending("space", limit=self.top_n * 5)
         if raw:
-            norm = hf_api.normalize_items(raw, id_key="id")
-            filtered = self._filter_recent(norm)
-            if filtered:
-                return filtered[: self.top_n]
-        # 2) 폴백: 좋아요 정렬
-        alt = hf_api.top_spaces_by_likes(limit=self.top_n * 5)
-        norm_alt = hf_api.normalize_items(alt, id_key="id")
-        return self._filter_recent(norm_alt)[: self.top_n]
+            combined = hf_api.normalize_items(raw, id_key="id")
+
+        recent_bucket, _ = self._split_recent_stale(combined)
+        if len(combined) < self.top_n or not recent_bucket:
+            recent_raw = hf_api.recent_spaces(limit=self.top_n * 5)
+            recent_norm = hf_api.normalize_items(recent_raw, id_key="id")
+            combined = self._merge_unique(combined, recent_norm)
+
+        recent_bucket, _ = self._split_recent_stale(combined)
+        if len(combined) < self.top_n or not recent_bucket:
+            alt = hf_api.top_spaces_by_likes(limit=self.top_n * 5)
+            norm_alt = hf_api.normalize_items(alt, id_key="id")
+            combined = self._merge_unique(combined, norm_alt)
+
+        return self._filter_recent(combined)[: self.top_n]
 
 
     # ---- 요약(옵션) ----

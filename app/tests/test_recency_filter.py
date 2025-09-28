@@ -46,7 +46,11 @@ def test_top_models_prefers_recent(monkeypatch, agent):
     ]
 
     monkeypatch.setattr(
-        "app.tools.hf_api.top_models_by_downloads", lambda limit=36: now_items
+        "app.tools.hf_api.recent_models", lambda limit=36: now_items
+    )
+    monkeypatch.setattr(
+        "app.tools.hf_api.top_models_by_downloads",
+        lambda limit=36: pytest.fail("downloads fallback should not be used"),
     )
 
     results = agent.top_models()
@@ -89,6 +93,7 @@ def test_trending_datasets_falls_back_to_stale_only_when_needed(monkeypatch, age
         return items
 
     monkeypatch.setattr("app.tools.hf_api.trending", fake_trending)
+    monkeypatch.setattr("app.tools.hf_api.recent_datasets", lambda limit=36: [])
     monkeypatch.setattr(
         "app.tools.hf_api.top_datasets_by_downloads",
         lambda limit=36: pytest.fail("fallback should not be used when trending returns data"),
@@ -121,6 +126,7 @@ def test_trending_spaces_uses_stale_when_no_recent(monkeypatch, agent):
     monkeypatch.setattr(
         "app.tools.hf_api.trending", lambda kind, limit=12: items if kind == "space" else []
     )
+    monkeypatch.setattr("app.tools.hf_api.recent_spaces", lambda limit=36: [])
     monkeypatch.setattr(
         "app.tools.hf_api.top_spaces_by_likes",
         lambda limit=36: items,
@@ -130,3 +136,38 @@ def test_trending_spaces_uses_stale_when_no_recent(monkeypatch, agent):
     ids = [item["id"] for item in results]
 
     assert ids == ["stale-one", "stale-two"]
+
+
+def test_recent_helpers_prioritise_fresh_over_downloads(monkeypatch, agent):
+    fresh = [
+        {
+            "modelId": "fresh-a",
+            "downloads": 100,
+            "likes": 10,
+            "lastModified": _iso_days_ago(1),
+        },
+        {
+            "modelId": "fresh-b",
+            "downloads": 90,
+            "likes": 9,
+            "lastModified": _iso_days_ago(2),
+        },
+    ]
+
+    stale = [
+        {
+            "modelId": "stale-a",
+            "downloads": 10000,
+            "likes": 2000,
+            "lastModified": _iso_days_ago(30),
+        }
+    ]
+
+    monkeypatch.setattr("app.tools.hf_api.recent_models", lambda limit=36: fresh)
+    monkeypatch.setattr("app.tools.hf_api.top_models_by_downloads", lambda limit=36: stale)
+
+    results = agent.top_models()
+    ids = [item["id"] for item in results]
+
+    assert ids[:2] == ["fresh-a", "fresh-b"]
+    assert ids[2] == "stale-a"

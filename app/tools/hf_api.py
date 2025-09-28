@@ -37,10 +37,30 @@ def top_models_by_downloads(limit: int = 12) -> List[Dict[str, Any]]:
     r.raise_for_status()
     return r.json() or []
 
+def recent_models(limit: int = 12) -> List[Dict[str, Any]]:
+    r = requests.get(
+        f"{BASE}/api/models",
+        params={"limit": limit, "sort": "last_modified", "full": "1"},
+        headers=_headers(),
+        timeout=45,
+    )
+    r.raise_for_status()
+    return r.json() or []
+
 def top_datasets_by_downloads(limit: int = 12) -> List[Dict[str, Any]]:
     r = requests.get(f"{BASE}/api/datasets",
                      params={"limit": limit, "sort": "downloads"},
                      headers=_headers(), timeout=45)
+    r.raise_for_status()
+    return r.json() or []
+
+def recent_datasets(limit: int = 12) -> List[Dict[str, Any]]:
+    r = requests.get(
+        f"{BASE}/api/datasets",
+        params={"limit": limit, "sort": "last_modified", "full": "1"},
+        headers=_headers(),
+        timeout=45,
+    )
     r.raise_for_status()
     return r.json() or []
 
@@ -51,6 +71,16 @@ def top_spaces_by_likes(limit: int = 12) -> List[Dict[str, Any]]:
     r.raise_for_status()
     return r.json() or []
 
+def recent_spaces(limit: int = 12) -> List[Dict[str, Any]]:
+    r = requests.get(
+        f"{BASE}/api/spaces",
+        params={"limit": limit, "sort": "last_modified", "full": "1"},
+        headers=_headers(),
+        timeout=45,
+    )
+    r.raise_for_status()
+    return r.json() or []
+
 def normalize_items(raw, id_key="id"):
     out=[]
     for it in raw or []:
@@ -58,14 +88,28 @@ def normalize_items(raw, id_key="id"):
         if not rid:
             continue
         link = f"{BASE}/{rid}"
+        last_modified = (
+            it.get("lastModified")
+            or it.get("lastModifiedAt")
+            or it.get("updatedAt")
+            or it.get("modifiedAt")
+            or it.get("createdAt")
+        )
+        updated_at = (
+            it.get("updatedAt")
+            or it.get("lastModified")
+            or it.get("lastModifiedAt")
+            or it.get("modifiedAt")
+            or it.get("createdAt")
+        )
         out.append({
             "id": rid,
             "link": link,
             "likes": it.get("likes"),
             "downloads": it.get("downloads"),
             "library": it.get("library_name") or it.get("library"),
-            "updatedAt": it.get("lastModified") or it.get("lastModifiedAt") or it.get("updatedAt"),
+            "updatedAt": updated_at,
             "createdAt": it.get("createdAt"),
-            "lastModified": it.get("lastModified") or it.get("updatedAt"),
+            "lastModified": last_modified,
         })
     return out
