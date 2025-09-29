@@ -1,10 +1,13 @@
 # app/tools/hf_api.py
+import logging
 import os
 import requests
 from typing import List, Dict, Any
 
 BASE = "https://huggingface.co"
 HF_TOKEN = os.getenv("HF_TOKEN", "").strip()
+
+logger = logging.getLogger(__name__)
 
 def _headers():
     return {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
@@ -25,61 +28,117 @@ def trending(kind: str, limit: int = 12) -> List[Dict[str, Any]]:
             if "lastModified" not in item and "lastModifiedAt" in item:
                 item["lastModified"] = item.get("lastModifiedAt")
         return data[:limit]
-    except requests.HTTPError:
+    except requests.HTTPError as err:
+        logger.warning("hf_api.trending(%s) failed: %s", kind, err)
         return []
-    except Exception:
+    except requests.RequestException as err:
+        logger.warning("hf_api.trending(%s) request failed: %s", kind, err)
+        return []
+    except Exception as err:
+        logger.warning("hf_api.trending(%s) unexpected error: %s", kind, err)
         return []
 
 def top_models_by_downloads(limit: int = 12) -> List[Dict[str, Any]]:
-    r = requests.get(f"{BASE}/api/models",
-                     params={"limit": limit, "sort": "downloads"},
-                     headers=_headers(), timeout=45)
-    r.raise_for_status()
-    return r.json() or []
+    try:
+        r = requests.get(
+            f"{BASE}/api/models",
+            params={"limit": limit, "sort": "downloads"},
+            headers=_headers(),
+            timeout=45,
+        )
+        r.raise_for_status()
+        return r.json() or []
+    except requests.HTTPError as err:
+        logger.warning("hf_api.top_models_by_downloads failed: %s", err)
+        return []
+    except requests.RequestException as err:
+        logger.warning("hf_api.top_models_by_downloads request failed: %s", err)
+        return []
 
 def recent_models(limit: int = 12) -> List[Dict[str, Any]]:
-    r = requests.get(
-        f"{BASE}/api/models",
-        params={"limit": limit, "sort": "last_modified", "full": "1"},
-        headers=_headers(),
-        timeout=45,
-    )
-    r.raise_for_status()
-    return r.json() or []
+    try:
+        r = requests.get(
+            f"{BASE}/api/models",
+            params={"limit": limit, "sort": "last_modified", "full": "1"},
+            headers=_headers(),
+            timeout=45,
+        )
+        r.raise_for_status()
+        return r.json() or []
+    except requests.HTTPError as err:
+        logger.warning("hf_api.recent_models failed: %s", err)
+        return []
+    except requests.RequestException as err:
+        logger.warning("hf_api.recent_models request failed: %s", err)
+        return []
 
 def top_datasets_by_downloads(limit: int = 12) -> List[Dict[str, Any]]:
-    r = requests.get(f"{BASE}/api/datasets",
-                     params={"limit": limit, "sort": "downloads"},
-                     headers=_headers(), timeout=45)
-    r.raise_for_status()
-    return r.json() or []
+    try:
+        r = requests.get(
+            f"{BASE}/api/datasets",
+            params={"limit": limit, "sort": "downloads"},
+            headers=_headers(),
+            timeout=45,
+        )
+        r.raise_for_status()
+        return r.json() or []
+    except requests.HTTPError as err:
+        logger.warning("hf_api.top_datasets_by_downloads failed: %s", err)
+        return []
+    except requests.RequestException as err:
+        logger.warning("hf_api.top_datasets_by_downloads request failed: %s", err)
+        return []
 
 def recent_datasets(limit: int = 12) -> List[Dict[str, Any]]:
-    r = requests.get(
-        f"{BASE}/api/datasets",
-        params={"limit": limit, "sort": "last_modified", "full": "1"},
-        headers=_headers(),
-        timeout=45,
-    )
-    r.raise_for_status()
-    return r.json() or []
+    try:
+        r = requests.get(
+            f"{BASE}/api/datasets",
+            params={"limit": limit, "sort": "last_modified", "full": "1"},
+            headers=_headers(),
+            timeout=45,
+        )
+        r.raise_for_status()
+        return r.json() or []
+    except requests.HTTPError as err:
+        logger.warning("hf_api.recent_datasets failed: %s", err)
+        return []
+    except requests.RequestException as err:
+        logger.warning("hf_api.recent_datasets request failed: %s", err)
+        return []
 
 def top_spaces_by_likes(limit: int = 12) -> List[Dict[str, Any]]:
-    r = requests.get(f"{BASE}/api/spaces",
-                     params={"limit": limit, "sort": "likes"},
-                     headers=_headers(), timeout=45)
-    r.raise_for_status()
-    return r.json() or []
+    try:
+        r = requests.get(
+            f"{BASE}/api/spaces",
+            params={"limit": limit, "sort": "likes"},
+            headers=_headers(),
+            timeout=45,
+        )
+        r.raise_for_status()
+        return r.json() or []
+    except requests.HTTPError as err:
+        logger.warning("hf_api.top_spaces_by_likes failed: %s", err)
+        return []
+    except requests.RequestException as err:
+        logger.warning("hf_api.top_spaces_by_likes request failed: %s", err)
+        return []
 
 def recent_spaces(limit: int = 12) -> List[Dict[str, Any]]:
-    r = requests.get(
-        f"{BASE}/api/spaces",
-        params={"limit": limit, "sort": "last_modified", "full": "1"},
-        headers=_headers(),
-        timeout=45,
-    )
-    r.raise_for_status()
-    return r.json() or []
+    try:
+        r = requests.get(
+            f"{BASE}/api/spaces",
+            params={"limit": limit, "sort": "last_modified", "full": "1"},
+            headers=_headers(),
+            timeout=45,
+        )
+        r.raise_for_status()
+        return r.json() or []
+    except requests.HTTPError as err:
+        logger.warning("hf_api.recent_spaces failed: %s", err)
+        return []
+    except requests.RequestException as err:
+        logger.warning("hf_api.recent_spaces request failed: %s", err)
+        return []
 
 def normalize_items(raw, id_key="id"):
     out=[]
