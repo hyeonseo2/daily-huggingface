@@ -33,7 +33,7 @@ def agent(monkeypatch):
 def test_top_models_recovers_when_recent_models_http_error(monkeypatch, agent):
     def fake_get(url, **kwargs):
         params = kwargs.get("params", {})
-        if url.endswith("/api/models") and params.get("sort") == "last_modified":
+        if url.endswith("/api/models") and params.get("sort") == "lastModified":
             return DummyResponse(error=requests.HTTPError("recent models boom"))
         if url.endswith("/api/models") and params.get("sort") == "downloads":
             return DummyResponse(
@@ -60,7 +60,7 @@ def test_trending_datasets_recovers_when_recent_http_error(monkeypatch, agent):
 
     def fake_get(url, **kwargs):
         params = kwargs.get("params", {})
-        if url.endswith("/api/datasets") and params.get("sort") == "last_modified":
+        if url.endswith("/api/datasets") and params.get("sort") == "lastModified":
             return DummyResponse(error=requests.HTTPError("recent datasets boom"))
         if url.endswith("/api/datasets") and params.get("sort") == "downloads":
             return DummyResponse(
@@ -87,7 +87,7 @@ def test_trending_spaces_recovers_when_recent_http_error(monkeypatch, agent):
 
     def fake_get(url, **kwargs):
         params = kwargs.get("params", {})
-        if url.endswith("/api/spaces") and params.get("sort") == "last_modified":
+        if url.endswith("/api/spaces") and params.get("sort") == "lastModified":
             return DummyResponse(error=requests.HTTPError("recent spaces boom"))
         if url.endswith("/api/spaces") and params.get("sort") == "likes":
             return DummyResponse(
