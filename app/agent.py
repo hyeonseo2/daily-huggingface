@@ -1,6 +1,6 @@
 # app/agent.py
 import os, math, json, datetime
-from typing import List, Dict, Any, Optional, Iterable, Tuple
+from typing import List, Dict, Any, Optional, Iterable, Tuple, Sequence
 
 from .tools import hf_api
 from .tools import mcp_client as mcp
@@ -82,9 +82,8 @@ class DailyHuggingFaceAgent:
             ordered.extend(_sort(stale)[:needed])
         return ordered
 
-    @staticmethod
     def _merge_unique(
-        primary: List[Dict[str, Any]], secondary: Iterable[Dict[str, Any]]
+        self, primary: Iterable[Dict[str, Any]], secondary: Iterable[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         seen = {item["id"] for item in primary}
         merged = list(primary)
@@ -96,34 +95,66 @@ class DailyHuggingFaceAgent:
             seen.add(item_id)
         return merged
 
-    # ---- 수집 ----
-    def top_models(self) -> List[Dict[str, Any]]:
-        # 1) MCP 시도
+    def _collect_from_mcp(
+        self, kind: str, id_fields: Sequence[str]
+    ) -> List[Dict[str, Any]]:
         try:
-            res = mcp.hub_search(q="*", kind="model", limit=self.top_n * 5)
-            items = res.get("items", [])
-            norm=[]
-            for it in items:
-                rid = it.get("id") or it.get("modelId")
-                if not rid: continue
-                norm.append({
+            res = mcp.hub_search(q="*", kind=kind, limit=self.top_n * 5)
+        except Exception:
+            return []
+
+        items = res.get("items", []) or []
+        normalized: List[Dict[str, Any]] = []
+        for it in items:
+            if not isinstance(it, dict):
+                continue
+            rid = None
+            for field in id_fields:
+                candidate = it.get(field)
+                if candidate:
+                    rid = candidate
+                    break
+            if not rid:
+                continue
+            last_modified = (
+                it.get("lastModified")
+                or it.get("lastModifiedAt")
+                or it.get("updatedAt")
+                or it.get("modifiedAt")
+            )
+            updated_at = (
+                it.get("updatedAt")
+                or it.get("lastModified")
+                or it.get("lastModifiedAt")
+                or it.get("modifiedAt")
+            )
+            normalized.append(
+                {
                     "id": rid,
                     "link": f"https://huggingface.co/{rid}",
                     "downloads": it.get("downloads"),
                     "likes": it.get("likes"),
-                    "library": it.get("library_name"),
-                    "updatedAt": it.get("lastModified") or it.get("updatedAt"),
+                    "library": it.get("library_name") or it.get("library"),
+                    "updatedAt": updated_at,
                     "createdAt": it.get("createdAt"),
-                })
-            if norm:
-                filtered = self._filter_recent(norm)
-                if filtered:
-                    return filtered[: self.top_n]
-        except Exception:
-            pass
+                    "lastModified": last_modified,
+                }
+            )
+        return normalized
+
+    # ---- 수집 ----
+    def top_models(self) -> List[Dict[str, Any]]:
+        # 1) MCP 시도
+        combined = self._collect_from_mcp("model", ["id", "modelId"])
+        if combined:
+            filtered = self._filter_recent(combined)
+            if len(filtered) >= self.top_n:
+                return filtered[: self.top_n]
+
         # 2) 폴백: REST - 최근 정렬 우선
         recent_raw = hf_api.recent_models(limit=self.top_n * 5)
-        combined = hf_api.normalize_items(recent_raw, id_key="modelId")
+        recent_norm = hf_api.normalize_items(recent_raw, id_key="modelId")
+        combined = self._merge_unique(combined, recent_norm) if combined else recent_norm
         recent_bucket, _ = self._split_recent_stale(combined)
         if len(combined) < self.top_n or not recent_bucket:
             downloads_raw = hf_api.top_models_by_downloads(limit=self.top_n * 5)
@@ -133,12 +164,17 @@ class DailyHuggingFaceAgent:
         return filtered[: self.top_n]
 
     def trending_datasets(self) -> List[Dict[str, Any]]:
-        combined: List[Dict[str, Any]] = []
+        combined = self._collect_from_mcp("dataset", ["id", "datasetId"])
+        if combined:
+            filtered = self._filter_recent(combined)
+            if len(filtered) >= self.top_n:
+                return filtered[: self.top_n]
 
         # 1) 트렌딩 시도
         raw = hf_api.trending("dataset", limit=self.top_n * 5)
         if raw:
-            combined = hf_api.normalize_items(raw, id_key="id")
+            trending_norm = hf_api.normalize_items(raw, id_key="id")
+            combined = self._merge_unique(combined, trending_norm) if combined else trending_norm
 
         recent_bucket, _ = self._split_recent_stale(combined)
         if len(combined) < self.top_n or not recent_bucket:
@@ -155,12 +191,17 @@ class DailyHuggingFaceAgent:
         return self._filter_recent(combined)[: self.top_n]
 
     def trending_spaces(self) -> List[Dict[str, Any]]:
-        combined: List[Dict[str, Any]] = []
+        combined = self._collect_from_mcp("space", ["id", "spaceId"])
+        if combined:
+            filtered = self._filter_recent(combined)
+            if len(filtered) >= self.top_n:
+                return filtered[: self.top_n]
 
         # 1) 트렌딩 시도
         raw = hf_api.trending("space", limit=self.top_n * 5)
         if raw:
-            combined = hf_api.normalize_items(raw, id_key="id")
+            trending_norm = hf_api.normalize_items(raw, id_key="id")
+            combined = self._merge_unique(combined, trending_norm) if combined else trending_norm
 
         recent_bucket, _ = self._split_recent_stale(combined)
         if len(combined) < self.top_n or not recent_bucket:
