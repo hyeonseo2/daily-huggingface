@@ -25,10 +25,10 @@ MD_TPL = Template("""# Daily HuggingFace — {{ date_str }}
 
 def _fmt_meta(x: Dict[str, Any]) -> str:
     m=[]
-    if x.get("downloads"): m.append(f"downloads: {x['downloads']}")
-    if x.get("likes"):     m.append(f"likes: {x['likes']}")
-    if x.get("library"):   m.append(f"lib: {x['library']}")
-    return ", ".join(m)
+    if x.get("downloads") is not None: m.append(f"⬇️ {x['downloads']}")
+    if x.get("likes") is not None:     m.append(f"❤️ {x['likes']}")
+    if x.get("library"):                m.append(f"📚 {x['library']}")
+    return " • ".join(m)
 
 def render_md(models, datasets, spaces, summaries, date_str: str, out_path: str):
     for col in (models, datasets, spaces):

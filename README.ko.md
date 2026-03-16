@@ -172,13 +172,13 @@ pytest -q
 # Daily HuggingFace — 2026-03-16
 
 ## Trending Models
-- [meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B) — downloads: 12345, likes: 678, lib: transformers
+- [meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B) — ⬇️ 12345 • ❤️ 678 • 📚 transformers
 
 ## Trending Datasets
-- [squad](https://huggingface.co/datasets/squad) — downloads: 100000, likes: 1000
+- [squad](https://huggingface.co/datasets/squad) — ⬇️ 100000 • ❤️ 1000
 
 ## Trending Spaces
-- [stabilityai/stable-diffusion-demo](https://huggingface.co/spaces/stabilityai/stable-diffusion-demo) — likes: 2000
+- [stabilityai/stable-diffusion-demo](https://huggingface.co/spaces/stabilityai/stable-diffusion-demo) — ❤️ 2000
 ```
 
 ---
