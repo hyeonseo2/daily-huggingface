@@ -1,16 +1,30 @@
 name: Daily HuggingFace (Issue)
 
+# 정책: 워크플로우는 2단계로 분리합니다.
+# - 단계 A(Generate): `python -m app.main` 실행 후 결과 파일/메타데이터 생성
+# - 단계 B(Report): 생성 결과를 GitHub Issue로 보고
+#
+# 보고 정책 옵션
+# - 옵션 1 (기본): 결과 파일은 커밋하지 않고, 이슈 본문에는 요약/경로만 남김
+# - 옵션 2 (선택): `actions/upload-artifact`로 md 파일 업로드 후,
+#                   이슈 본문에 artifact 확인 링크(해당 run URL) 기재
+
 on:
   schedule:
     - cron: '0 23 * * *'   # KST 08:00
   workflow_dispatch: {}
 
 jobs:
-  run:
+  generate:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       issues: write
+    outputs:
+      newsletter_filename: ${{ steps.prepare.outputs.newsletter_filename }}
+      newsletter_path: ${{ steps.prepare.outputs.newsletter_path }}
+      models_count: ${{ steps.meta.outputs.models_count }}
+      datasets_count: ${{ steps.meta.outputs.datasets_count }}
+      spaces_count: ${{ steps.meta.outputs.spaces_count }}
 
     steps:
       - uses: actions/checkout@v4
@@ -23,28 +37,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate
+      - name: Stage A - Generate newsletter file
+        # 단계 A: python -m app.main 실행 후 결과 파일 생성
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           MCP_URL: ${{ secrets.MCP_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          NEWSLETTER_TOP_N: "12"
-          NEWSLETTER_OUTPUT_DIR: "${{ github.workspace }}/newsletters"
-          TZ: "Asia/Seoul"
+          NEWSLETTER_TOP_N: '12'
+          NEWSLETTER_OUTPUT_DIR: '${{ github.workspace }}/newsletters'
+          TZ: 'Asia/Seoul'
         run: |
           python -m app.main
-          # GH Actions에서는 리포에 커밋/PR하려면 repo 경로에 파일이 있어야 하므로,
-          # 컨테이너 없이 로컬 실행 경로로 한 번 더 저장하려면 app/main.py 수정이 필요.
-          # (여기 워크플로우는 Docker 없이 순수 Python 실행을 가정)
-          # 결과 파일명을 파악하려면 동일한 날짜 규칙으로 계산:
+
+      - name: Prepare generated file path
+        id: prepare
+        run: |
           pydate=$(python -c "from datetime import datetime,timezone,timedelta;print(datetime.now(timezone(timedelta(hours=9))).date().isoformat())")
-          echo "NEWSLETTER_FILENAME=daily-huggingface-${pydate}.md" >> $GITHUB_ENV
+          filename="daily-huggingface-${pydate}.md"
+          filepath="newsletters/${filename}"
+
+          echo "newsletter_filename=${filename}" >> "$GITHUB_OUTPUT"
+          echo "newsletter_path=${filepath}" >> "$GITHUB_OUTPUT"
 
       - name: Collect newsletter metadata
+        id: meta
         run: |
-          FILE_PATH="newsletters/${{ env.NEWSLETTER_FILENAME }}"
-          export NEWSLETTER_PATH="${FILE_PATH}"
-          echo "NEWSLETTER_PATH=${FILE_PATH}" >> $GITHUB_ENV
+          export NEWSLETTER_PATH="${{ steps.prepare.outputs.newsletter_path }}"
 
           python - <<'PY'
           import os
@@ -64,25 +82,59 @@ jobs:
           datasets = section_count("Trending Datasets")
           spaces = section_count("Trending Spaces")
 
-          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
-              env.write(f"MODELS_COUNT={models}\n")
-              env.write(f"DATASETS_COUNT={datasets}\n")
-              env.write(f"SPACES_COUNT={spaces}\n")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"models_count={models}\n")
+              out.write(f"datasets_count={datasets}\n")
+              out.write(f"spaces_count={spaces}\n")
           PY
 
-      - name: Create issue
+      - name: Upload newsletter artifact (Option 2)
+        if: ${{ vars.REPORT_WITH_ARTIFACT == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare.outputs.newsletter_filename }}
+          path: ${{ steps.prepare.outputs.newsletter_path }}
+
+  report:
+    runs-on: ubuntu-latest
+    needs: generate
+    permissions:
+      issues: write
+
+    steps:
+      - name: Stage B - Report result as issue
+        # 단계 B: 생성 결과를 이슈로 보고
         uses: actions/github-script@v7
+        env:
+          NEWSLETTER_FILENAME: ${{ needs.generate.outputs.newsletter_filename }}
+          NEWSLETTER_PATH: ${{ needs.generate.outputs.newsletter_path }}
+          MODELS_COUNT: ${{ needs.generate.outputs.models_count }}
+          DATASETS_COUNT: ${{ needs.generate.outputs.datasets_count }}
+          SPACES_COUNT: ${{ needs.generate.outputs.spaces_count }}
+          REPORT_WITH_ARTIFACT: ${{ vars.REPORT_WITH_ARTIFACT || 'false' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
+            const withArtifact = process.env.REPORT_WITH_ARTIFACT === 'true';
+            const optionText = withArtifact
+              ? '옵션 2 적용: md 파일을 artifact로 업로드했고 아래 run 링크에서 확인할 수 있습니다.'
+              : '옵션 1 적용: 결과 파일은 커밋하지 않고 요약/경로만 남깁니다.';
+
+            const body = [
+              'Automated daily newsletter generated.',
+              '',
+              `- 생성된 파일: \`${process.env.NEWSLETTER_PATH}\``,
+              `- 섹션별 아이템 수: models=${process.env.MODELS_COUNT}, datasets=${process.env.DATASETS_COUNT}, spaces=${process.env.SPACES_COUNT}`,
+              `- 보고 정책: ${optionText}`,
+            ];
+
+            if (withArtifact) {
+              body.push(`- Artifact 확인: ${process.env.RUN_URL}`);
+            }
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Daily HuggingFace: ${{ env.NEWSLETTER_FILENAME }}`,
-              body: [
-                'Automated daily newsletter generated.',
-                '',
-                `- 생성된 파일: \\`${{ env.NEWSLETTER_PATH }}\\``,
-                `- 섹션별 아이템 수: models=${{ env.MODELS_COUNT }}, datasets=${{ env.DATASETS_COUNT }}, spaces=${{ env.SPACES_COUNT }}`,
-                '- 후속 액션: 검토 후 수동 merge/commit',
-              ].join('\n'),
+              title: `Daily HuggingFace: ${process.env.NEWSLETTER_FILENAME}`,
+              body: body.join('\n'),
             });
