@@ -180,6 +180,7 @@ class DailyHuggingFaceAgent:
         return self._collect_items(
             kind="model",
             strategies=[
+                (lambda limit: hf_api.trending("model", limit=limit), "id"),
                 (hf_api.recent_models, "modelId"),
                 (hf_api.top_models_by_downloads, "modelId"),
             ],

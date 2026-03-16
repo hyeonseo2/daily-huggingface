@@ -45,6 +45,7 @@ def test_top_models_prefers_recent(monkeypatch, agent):
         },
     ]
 
+    monkeypatch.setattr("app.tools.hf_api.trending", lambda kind, limit=36: [])
     monkeypatch.setattr(
         "app.tools.hf_api.recent_models", lambda limit=36: now_items
     )
@@ -57,6 +58,52 @@ def test_top_models_prefers_recent(monkeypatch, agent):
     ids = [item["id"] for item in results]
 
     assert ids == ["fresh-1", "fresh-2", "fresh-3"]
+
+
+def test_top_models_prefers_trending_over_recent(monkeypatch, agent):
+    trending_items = [
+        {
+            "id": "trend-a",
+            "downloads": 100,
+            "likes": 20,
+            "lastModified": _iso_days_ago(1),
+        },
+        {
+            "id": "trend-b",
+            "downloads": 90,
+            "likes": 10,
+            "lastModified": _iso_days_ago(2),
+        },
+        {
+            "id": "trend-c",
+            "downloads": 70,
+            "likes": 8,
+            "lastModified": _iso_days_ago(3),
+        },
+    ]
+
+    called = {"kind": None}
+
+    def fake_trending(kind: str, limit: int = 12):
+        called["kind"] = kind
+        assert kind == "model"
+        assert limit >= 3 * 5
+        return trending_items
+
+    monkeypatch.setattr("app.tools.hf_api.trending", fake_trending)
+    monkeypatch.setattr(
+        "app.tools.hf_api.recent_models", lambda limit=36: pytest.fail("recent should not be used when trending has enough data")
+    )
+    monkeypatch.setattr(
+        "app.tools.hf_api.top_models_by_downloads",
+        lambda limit=36: pytest.fail("downloads fallback should not be used"),
+    )
+
+    results = agent.top_models()
+    ids = [item["id"] for item in results]
+
+    assert called["kind"] == "model"
+    assert ids == ["trend-a", "trend-b", "trend-c"]
 
 
 def test_trending_datasets_falls_back_to_stale_only_when_needed(monkeypatch, agent):
@@ -163,6 +210,11 @@ def test_recent_helpers_prioritise_fresh_over_downloads(monkeypatch, agent):
         }
     ]
 
+    # 모델 Trending이 비어있을 때만 fallback 동작을 검증
+    monkeypatch.setattr(
+        "app.tools.hf_api.trending",
+        lambda kind, limit=36: [] if kind == "model" else []
+    )
     monkeypatch.setattr("app.tools.hf_api.recent_models", lambda limit=36: fresh)
     monkeypatch.setattr("app.tools.hf_api.top_models_by_downloads", lambda limit=36: stale)
 
