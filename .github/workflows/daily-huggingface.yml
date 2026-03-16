@@ -62,15 +62,15 @@ jobs:
         run: |
           pydate=$(python -c "from datetime import datetime,timezone,timedelta;print(datetime.now(timezone(timedelta(hours=9))).date().isoformat())")
           filename="daily-huggingface-${pydate}.md"
-          filepath="newsletters/${filename}"
+          filepath="${{ github.workspace }}/newsletters/${filename}"
 
           echo "newsletter_filename=${filename}" >> "$GITHUB_OUTPUT"
           echo "newsletter_path=${filepath}" >> "$GITHUB_OUTPUT"
 
       - name: Ensure newsletter is saved under newsletters
         run: |
-          mkdir -p newsletters
-          cp "${{ steps.prepare.outputs.newsletter_path }}" "newsletters/${{ steps.prepare.outputs.newsletter_filename }}" || true
+          mkdir -p "${{ github.workspace }}/newsletters"
+          cp "${{ steps.prepare.outputs.newsletter_path }}" "${{ github.workspace }}/newsletters/${{ steps.prepare.outputs.newsletter_filename }}"
 
       - name: Collect newsletter metadata
         id: meta
@@ -149,7 +149,6 @@ jobs:
             const safeContent = process.env.NEWSLETTER_CONTENT || '';
 
             const body = [
-              '## Newsletter Content',
               safeContent,
             ];
 
