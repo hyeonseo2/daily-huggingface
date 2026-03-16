@@ -1,86 +1,127 @@
 # 📰 Daily HuggingFace
 
-매일 Hugging Face의 **인기 모델 / 트렌딩 데이터셋 / 트렌딩 스페이스**를 모아
-Markdown 뉴스레터 파일(`daily-huggingface-YYYY-MM-DD.md`)을 생성합니다. 기본적으로
-`app.main`은 리포지토리의 `newsletters/` 디렉터리에 파일을 저장하며, 환경 변수
-`NEWSLETTER_OUTPUT_DIR`로 다른 경로로 변경할 수 있습니다.
+🇰🇷 한국어 README: [README.ko.md](./README.ko.md)
 
-- **기본 데이터 소스**: Hugging Face REST API
-- **선택적으로** Hugging Face MCP 서버(`MCP_URL`)를 함께 사용
-- **로컬 / Docker 실행**으로 수동 생성 가능
-- **GitHub Actions 워크플로우**를 통해 매일 자동 실행 + 이슈 생성 가능
+Daily HuggingFace generates a Markdown newsletter with trending Hugging Face models, datasets, and spaces.
+
+- Default output directory: `newsletters/`
+- Configurable via `NEWSLETTER_OUTPUT_DIR`
+- Supports Hugging Face REST API and Hugging Face MCP (`hub_repo_search`)
+- Scheduled run supported via GitHub Actions
+- Output file format: `daily-huggingface-YYYY-MM-DD.md`
 
 ---
 
-## 🚀 빠른 시작
+## Contents
 
-### 1. Docker 빌드
+- [What is this](#what-is-this)
+- [Quick start](#quick-start)
+- [MCP setup (important)](#mcp-setup-important)
+- [Environment Variables](#environment-variables)
+- [Docker Compose](#docker-compose)
+- [GitHub Actions](#github-actions)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Output example](#output-example)
+- [Changelog / extension ideas](#changelog--extension-ideas)
+
+---
+
+## What is this
+
+This app creates a daily Markdown newsletter summarizing:
+
+- **Top Models**
+- **Trending Datasets**
+- **Trending Spaces**
+
+It applies recency-first prioritization and fallback to REST API when MCP is unavailable.
+
+---
+
+## Quick start
+
+### 1) Install and run
+
 ```bash
-git clone https://github.com/yourname/daily-huggingface.git
-cd daily-huggingface
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+HF_TOKEN=hf_xxx python3 -m app.main
+```
+
+Default output:
+
+```text
+<repo>/newsletters/daily-huggingface-YYYY-MM-DD.md
+```
+
+Override output path:
+
+```bash
+NEWSLETTER_OUTPUT_DIR=/tmp/out python3 -m app.main
+```
+
+### 2) Run with Docker
+
+```bash
 docker build -t daily-huggingface .
-````
-
-### 2. 실행
-
-```bash
-# 애플리케이션은 기본적으로 <repo>/newsletters/에 결과를 저장하며,
-# 아래 Docker 예시는 호스트 볼륨 마운트를 위해 /data로 경로를 덮어씁니다.
 mkdir -p out
 docker run --rm \
-  -e HF_TOKEN="hf_xxxxxxxxx" \
+  -e HF_TOKEN="hf_xxxxx" \
   -e NEWSLETTER_OUTPUT_DIR="/data" \
   -v "$(pwd)/out:/data" \
+  -e MCP_URL="https://huggingface.co/mcp" \
   daily-huggingface
 ```
 
-### 3. 스모크 테스트
+> `tmp` directories in repository should be ignored by output path for local test runs.
 
-빠르게 동작 확인을 하고 싶다면:
+---
 
-기본 출력은 `<repo>/newsletters/`이지만, 아래 명령은 Docker 예시와 같이 `/data`로 재정의합니다.
+## MCP setup (important)
+
+### Endpoint
+
+Use MCP server endpoint:
+
+- `https://huggingface.co/mcp`
+
+In this project, MCP tool name is **`hub_repo_search`**.
+
+### Why this matters
+
+- This repo's MCP integration is implemented against HF MCP `hub_repo_search`.
+- Older docs/examples may show different tool names.
+
+### Quick connection check (optional)
+
 ```bash
-docker run --rm \
-  -e HF_TOKEN="hf_xxxxxxxxx" \
-  -e NEWSLETTER_OUTPUT_DIR="/data" \
-  -v "$(pwd)/out:/data" \
-  --entrypoint python \
-  daily-huggingface -m app.smoke_test
+curl -sS -X POST https://huggingface.co/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":"1","method":"initialize","params":{"protocolVersion":"2024-11-05","clientInfo":{"name":"daily-hf","version":"1.0"},"capabilities":{}}}'
 ```
 
-출력 예시:
-
-```
-=== Daily HuggingFace Smoke Test ===
-HF_TOKEN set? YES
-MCP_URL set?  NO
-TOP_N: 6
-Output: /data/_test-daily-huggingface-2025-09-26.md (Docker 예시에서는 /data, 기본은 <repo>/newsletters/)
-Models:   6
-Datasets: 6
-Spaces:   6
-
--- Models (top 3) --
-- meta-llama/Llama-3.1-8B ...
-...
-```
+Then query tools and try a sample search with `repo_types`.
 
 ---
 
-## ⚙️ 환경 변수
+## Environment Variables
 
-| 이름                 | 설명                                 | 필수 | 기본         |
-| ------------------ | ---------------------------------- | -- | ---------- |
-| `HF_TOKEN`         | Hugging Face 토큰 (레이트리밋 완화/프라이빗 접근) | 선택 | 없음         |
-| `MCP_URL`          | Hugging Face MCP 서버 `/mcp` 엔드포인트   | 선택 | 없음         |
-| `NEWSLETTER_OUTPUT_DIR` | 뉴스레터 파일 출력 디렉터리              | 선택 | `newsletters/` |
-| `OPENAI_API_KEY`   | OpenAI API 키 (요약문 생성에 사용)          | 선택 | 없음         |
-| `NEWSLETTER_TOP_N` | 섹션별 항목 수                           | 선택 | 12         |
-| `TZ`               | 타임존                                | 선택 | Asia/Seoul |
+| Name | Description | Required | Default |
+| --- | --- | --- | --- |
+| `HF_TOKEN` | Hugging Face token (rate limit relief/private access) | optional | (empty) |
+| `MCP_URL` | MCP endpoint (recommended `https://huggingface.co/mcp`) | optional | empty |
+| `NEWSLETTER_OUTPUT_DIR` | Output directory | optional | `newsletters/` |
+| `OPENAI_API_KEY` | Optional OpenAI key for section summaries | optional | empty |
+| `NEWSLETTER_TOP_N` | Number of items per section | optional | `12` |
+| `TZ` | Timezone | optional | `Asia/Seoul` |
 
 ---
 
-## 📦 docker-compose
+## Docker Compose
 
 ```yaml
 version: "3.9"
@@ -100,50 +141,54 @@ services:
     restart: "no"
 ```
 
-위 설정 역시 Docker 컨테이너 내부 경로를 `/data`로 고정해 호스트의 `./out`을 마운트하며,
-애플리케이션의 기본 출력 디렉터리인 `<repo>/newsletters/`를 덮어씁니다.
-
-실행:
+Run:
 
 ```bash
-HF_TOKEN=hf_xxxxxxxxx docker compose up --build
+HF_TOKEN=hf_xxxxxx MCP_URL=https://huggingface.co/mcp docker compose up --build
 ```
 
 ---
 
-## 🤖 GitHub Actions 자동화
+## GitHub Actions
 
-리포지토리에 포함된 워크플로우 파일:
-`.github/workflows/daily-huggingface.yml`
+Workflow file: `.github/workflows/daily-huggingface.yml`
 
-* 매일 **KST 08:00** 실행
-* 워크플로우 2단계 구성
-  * 단계 A: `python -m app.main` 실행 후 결과 파일 생성
-  * 단계 B: 생성 결과를 **자동 이슈 생성**으로 보고
-
-보고 정책(워크플로우 주석과 동일):
-
-* 옵션 1(기본): 파일은 커밋하지 않고 이슈 본문에 요약/경로만 남김
-* 옵션 2(선택): `actions/upload-artifact`로 md 파일 업로드 후, 이슈에 artifact 확인 링크 기재
-
-### Secrets 설정
-
-* `HF_TOKEN` (권장)
-* `MCP_URL` (옵션)
-* `OPENAI_API_KEY` (옵션)
+- Schedule: `0 23 * * *` (KST 08:00)
+- Two-step pipeline:
+  1. Generate newsletter (`python -m app.main`)
+  2. Create issue with generation summary
+- Optional artifact mode: set repository variable `REPORT_WITH_ARTIFACT=true`
 
 ---
 
-## 📂 결과물 예시
+## Testing
 
-`daily-huggingface-2025-09-26.md`
+```bash
+pytest -q
+```
+
+Current tests cover MCP preference, recentness + fallback logic, and end-to-end rendering.
+
+---
+
+## Troubleshooting
+
+- If MCP returns session-related errors:
+  - Ensure `Accept: application/json, text/event-stream`
+  - Ensure session flow is handled by `mcp-session-id`
+- If you see `hf_api.trending(...)` errors but output is still generated:
+  - This is expected fallback behavior (REST fallback/retry path)
+- If a link format differs (`hf.co/...`), this is expected and valid
+
+---
+
+## Output example
 
 ```markdown
-# Daily HuggingFace — 2025-09-26
+# Daily HuggingFace — 2026-03-16
 
 ## Top Models
 - [meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B) — downloads: 12345, likes: 678, lib: transformers
-- [openai/clip-vit-base-patch32](https://huggingface.co/openai/clip-vit-base-patch32) — downloads: 54321, likes: 789
 
 ## Trending Datasets
 - [squad](https://huggingface.co/datasets/squad) — downloads: 100000, likes: 1000
@@ -154,9 +199,17 @@ HF_TOKEN=hf_xxxxxxxxx docker compose up --build
 
 ---
 
-## 🛠️ 확장 아이디어
+## Changelog / extension ideas
 
-* 지난주 대비 증감률 / 분야별 필터(CV, NLP 등)
-* Hugging Face 블로그 포스트 섹션 추가
-* 스페이스 실행 결과(이미지/오디오) 링크 포함(MCP 활용)
-* 이메일/Slack/Notion 자동 게시 파이프라인 추가
+- Add weekly delta ranking
+- Add domain filtering (vision/nlp/audio)
+- Add Hugging Face blog/paper sections
+- Add publication targets (Slack, Discord, Notion, email)
+
+---
+
+## Korean README
+
+For Korean instructions, use:
+
+- `README.ko.md`

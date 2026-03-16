@@ -9,3 +9,4 @@ __pycache__/
 
 # Runtime output (generated locally/by Docker)
 out/
+tmp/

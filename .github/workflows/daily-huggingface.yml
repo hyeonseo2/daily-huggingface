@@ -8,6 +8,11 @@ name: Daily HuggingFace (Issue)
 # - 옵션 1 (기본): 결과 파일은 커밋하지 않고, 이슈 본문에는 요약/경로만 남김
 # - 옵션 2 (선택): `actions/upload-artifact`로 md 파일 업로드 후,
 #                   이슈 본문에 artifact 확인 링크(해당 run URL) 기재
+#
+# MCP 설정 가이드
+# - HF MCP 권장 주소: https://huggingface.co/mcp
+# - 권장: 저장소 Secret MCP_URL에 위 URL 또는 사내 MCP URL을 넣고 사용
+# - 실행 우선순위: MCP 실패/부족 시 REST API로 자동 폴백
 
 on:
   schedule:
@@ -41,7 +46,9 @@ jobs:
         # 단계 A: python -m app.main 실행 후 결과 파일 생성
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          MCP_URL: ${{ secrets.MCP_URL }}
+          # 배포 기준 MCP 기본값: https://huggingface.co/mcp
+          # - 권장: Repository Variables(MCP_URL) 또는 Secret(MCP_URL)에서 관리
+          MCP_URL: ${{ vars.MCP_URL || secrets.MCP_URL || 'https://huggingface.co/mcp' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           NEWSLETTER_TOP_N: '12'
           NEWSLETTER_OUTPUT_DIR: '${{ github.workspace }}/newsletters'
@@ -76,7 +83,7 @@ jobs:
               if not match:
                   return 0
               body = match.group(1)
-              return len(re.findall(r"^- \\[", body, re.M))
+              return len(re.findall(r"^- \\\[", body, re.M))
 
           models = section_count("Top Models")
           datasets = section_count("Trending Datasets")

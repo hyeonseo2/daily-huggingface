@@ -1,4 +1,3 @@
-# app/agent.py
 import os, math, json, datetime
 from typing import List, Dict, Any, Optional, Iterable, Tuple, Sequence, Callable
 
@@ -7,10 +6,13 @@ from .tools import mcp_client as mcp
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 
+
 def _score(item: Dict[str, Any]) -> float:
     """간단 점수: log(downloads)*0.6 + log(likes)*0.3 + recency*0.1"""
+
     def _safe_num(x):
         return x if isinstance(x, (int, float)) and x >= 0 else 0
+
     d = math.log10(_safe_num(item.get("downloads")) + 1)
     l = math.log10(_safe_num(item.get("likes")) + 1)
     rec = 0.0
@@ -23,9 +25,10 @@ def _score(item: Dict[str, Any]) -> float:
             now = datetime.datetime.now(datetime.timezone.utc)
             days = (now - dt.astimezone(datetime.timezone.utc)).days
             rec = max(0.0, 1.0 - min(days, 30) / 30.0)
-        except:
+        except Exception:
             pass
     return 0.6 * d + 0.3 * l + 0.1 * rec
+
 
 class DailyHuggingFaceAgent:
     def __init__(self, top_n: int = 12):
@@ -103,7 +106,13 @@ class DailyHuggingFaceAgent:
         except Exception:
             return []
 
-        items = res.get("items", []) or []
+        if isinstance(res, dict):
+            items = res.get("items", []) or []
+        elif isinstance(res, list):
+            items = res
+        else:
+            items = []
+
         normalized: List[Dict[str, Any]] = []
         for it in items:
             if not isinstance(it, dict):
@@ -128,10 +137,11 @@ class DailyHuggingFaceAgent:
                 or it.get("lastModifiedAt")
                 or it.get("modifiedAt")
             )
+            link = it.get("link") or f"https://huggingface.co/{rid}"
             normalized.append(
                 {
                     "id": rid,
-                    "link": f"https://huggingface.co/{rid}",
+                    "link": link,
                     "downloads": it.get("downloads"),
                     "likes": it.get("likes"),
                     "library": it.get("library_name") or it.get("library"),
@@ -198,7 +208,6 @@ class DailyHuggingFaceAgent:
             id_fields=["id", "spaceId"],
         )
 
-
     # ---- 요약(옵션) ----
     def summarize_items(self, section_name: str, items: List[Dict[str, Any]]) -> Optional[str]:
         if not OPENAI_API_KEY or not items:
@@ -212,6 +221,7 @@ class DailyHuggingFaceAgent:
                 ),
             }
             import requests
+
             r = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={
