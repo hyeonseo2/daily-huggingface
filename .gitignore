@@ -1,0 +1,11 @@
+# Python cache/artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local env
+.venv/
+.env
+
+# Runtime output (generated locally/by Docker)
+out/
