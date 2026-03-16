@@ -27,6 +27,7 @@ jobs:
     outputs:
       newsletter_filename: ${{ steps.prepare.outputs.newsletter_filename }}
       newsletter_path: ${{ steps.prepare.outputs.newsletter_path }}
+      newsletter_content: ${{ steps.collect.outputs.newsletter_content }}
       models_count: ${{ steps.meta.outputs.models_count }}
       datasets_count: ${{ steps.meta.outputs.datasets_count }}
       spaces_count: ${{ steps.meta.outputs.spaces_count }}
@@ -83,7 +84,7 @@ jobs:
               if not match:
                   return 0
               body = match.group(1)
-              return len(re.findall(r"^- \\\[", body, re.M))
+              return len(re.findall(r"^- \\[", body, re.M))
 
           models = section_count("Top Models")
           datasets = section_count("Trending Datasets")
@@ -95,9 +96,31 @@ jobs:
               out.write(f"spaces_count={spaces}\n")
           PY
 
+      - name: Collect newsletter content (for issue)
+        id: collect
+        run: |
+          export NEWSLETTER_PATH="${{ steps.prepare.outputs.newsletter_path }}"
+
+          python - <<'PY'
+          import os
+          import uuid
+
+          path = os.environ["NEWSLETTER_PATH"]
+          text = open(path, encoding="utf-8").read()
+          max_chars = 12000
+          if len(text) > max_chars:
+              text = text[:max_chars] + "\n\n...(생략: 내용이 길어 일부만 표시합니다)"
+
+          marker = "EOF_" + uuid.uuid4().hex
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"newsletter_content<<{marker}\n")
+              out.write(text)
+              out.write(f"\n{marker}\n")
+          PY
+
       - name: Upload newsletter artifact (Option 2)
         if: ${{ vars.REPORT_WITH_ARTIFACT == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ steps.prepare.outputs.newsletter_filename }}
           path: ${{ steps.prepare.outputs.newsletter_path }}
@@ -115,6 +138,7 @@ jobs:
         env:
           NEWSLETTER_FILENAME: ${{ needs.generate.outputs.newsletter_filename }}
           NEWSLETTER_PATH: ${{ needs.generate.outputs.newsletter_path }}
+          NEWSLETTER_CONTENT: ${{ needs.generate.outputs.newsletter_content }}
           MODELS_COUNT: ${{ needs.generate.outputs.models_count }}
           DATASETS_COUNT: ${{ needs.generate.outputs.datasets_count }}
           SPACES_COUNT: ${{ needs.generate.outputs.spaces_count }}
@@ -127,12 +151,19 @@ jobs:
               ? '옵션 2 적용: md 파일을 artifact로 업로드했고 아래 run 링크에서 확인할 수 있습니다.'
               : '옵션 1 적용: 결과 파일은 커밋하지 않고 요약/경로만 남깁니다.';
 
+            const safeContent = (process.env.NEWSLETTER_CONTENT || '').replace(/```/g, '`\u200B``');
+
             const body = [
               'Automated daily newsletter generated.',
               '',
               `- 생성된 파일: \`${process.env.NEWSLETTER_PATH}\``,
               `- 섹션별 아이템 수: models=${process.env.MODELS_COUNT}, datasets=${process.env.DATASETS_COUNT}, spaces=${process.env.SPACES_COUNT}`,
               `- 보고 정책: ${optionText}`,
+              '',
+              '## Newsletter Content',
+              '```markdown',
+              safeContent,
+              '```',
             ];
 
             if (withArtifact) {
