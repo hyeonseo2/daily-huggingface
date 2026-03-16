@@ -1,4 +1,4 @@
-name: Daily HuggingFace (PR)
+name: Daily HuggingFace (Issue)
 
 on:
   schedule:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
+      issues: write
 
     steps:
       - uses: actions/checkout@v4
@@ -40,12 +40,49 @@ jobs:
           pydate=$(python -c "from datetime import datetime,timezone,timedelta;print(datetime.now(timezone(timedelta(hours=9))).date().isoformat())")
           echo "NEWSLETTER_FILENAME=daily-huggingface-${pydate}.md" >> $GITHUB_ENV
 
-      - uses: peter-evans/create-pull-request@v6
+      - name: Collect newsletter metadata
+        run: |
+          FILE_PATH="newsletters/${{ env.NEWSLETTER_FILENAME }}"
+          export NEWSLETTER_PATH="${FILE_PATH}"
+          echo "NEWSLETTER_PATH=${FILE_PATH}" >> $GITHUB_ENV
+
+          python - <<'PY'
+          import os
+          import re
+
+          path = os.environ["NEWSLETTER_PATH"]
+          text = open(path, encoding="utf-8").read()
+
+          def section_count(header: str) -> int:
+              match = re.search(rf"^## {re.escape(header)}\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+              if not match:
+                  return 0
+              body = match.group(1)
+              return len(re.findall(r"^- \\[", body, re.M))
+
+          models = section_count("Top Models")
+          datasets = section_count("Trending Datasets")
+          spaces = section_count("Trending Spaces")
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"MODELS_COUNT={models}\n")
+              env.write(f"DATASETS_COUNT={datasets}\n")
+              env.write(f"SPACES_COUNT={spaces}\n")
+          PY
+
+      - name: Create issue
+        uses: actions/github-script@v7
         with:
-          commit-message: "chore(daily-huggingface): add ${{ env.NEWSLETTER_FILENAME }}"
-          title: "Daily HuggingFace: ${{ env.NEWSLETTER_FILENAME }}"
-          body: "Automated daily newsletter."
-          branch: "chore/dhf/${{ env.NEWSLETTER_FILENAME }}"
-          base: "main"
-          add-paths: |
-            newsletters/${{ env.NEWSLETTER_FILENAME }}
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Daily HuggingFace: ${{ env.NEWSLETTER_FILENAME }}`,
+              body: [
+                'Automated daily newsletter generated.',
+                '',
+                `- 생성된 파일: \\`${{ env.NEWSLETTER_PATH }}\\``,
+                `- 섹션별 아이템 수: models=${{ env.MODELS_COUNT }}, datasets=${{ env.DATASETS_COUNT }}, spaces=${{ env.SPACES_COUNT }}`,
+                '- 후속 액션: 검토 후 수동 merge/commit',
+              ].join('\n'),
+            });
