@@ -154,21 +154,11 @@ jobs:
             const safeContent = (process.env.NEWSLETTER_CONTENT || '').replace(/```/g, '`\u200B``');
 
             const body = [
-              'Automated daily newsletter generated.',
-              '',
-              `- 생성된 파일: \`${process.env.NEWSLETTER_PATH}\``,
-              `- 섹션별 아이템 수: models=${process.env.MODELS_COUNT}, datasets=${process.env.DATASETS_COUNT}, spaces=${process.env.SPACES_COUNT}`,
-              `- 보고 정책: ${optionText}`,
-              '',
               '## Newsletter Content',
               '```markdown',
               safeContent,
               '```',
             ];
-
-            if (withArtifact) {
-              body.push(`- Artifact 확인: ${process.env.RUN_URL}`);
-            }
 
             await github.rest.issues.create({
               owner: context.repo.owner,
