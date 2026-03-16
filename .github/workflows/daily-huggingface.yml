@@ -67,6 +67,11 @@ jobs:
           echo "newsletter_filename=${filename}" >> "$GITHUB_OUTPUT"
           echo "newsletter_path=${filepath}" >> "$GITHUB_OUTPUT"
 
+      - name: Ensure newsletter is saved under newsletters
+        run: |
+          mkdir -p newsletters
+          cp "${{ steps.prepare.outputs.newsletter_path }}" "newsletters/${{ steps.prepare.outputs.newsletter_filename }}" || true
+
       - name: Collect newsletter metadata
         id: meta
         run: |
@@ -118,8 +123,7 @@ jobs:
               out.write(f"\n{marker}\n")
           PY
 
-      - name: Upload newsletter artifact (Option 2)
-        if: ${{ vars.REPORT_WITH_ARTIFACT == 'true' }}
+      - name: Upload newsletter artifact
         uses: actions/upload-artifact@v5
         with:
           name: ${{ steps.prepare.outputs.newsletter_filename }}
@@ -139,18 +143,10 @@ jobs:
           NEWSLETTER_FILENAME: ${{ needs.generate.outputs.newsletter_filename }}
           NEWSLETTER_PATH: ${{ needs.generate.outputs.newsletter_path }}
           NEWSLETTER_CONTENT: ${{ needs.generate.outputs.newsletter_content }}
-          MODELS_COUNT: ${{ needs.generate.outputs.models_count }}
-          DATASETS_COUNT: ${{ needs.generate.outputs.datasets_count }}
-          SPACES_COUNT: ${{ needs.generate.outputs.spaces_count }}
           REPORT_WITH_ARTIFACT: ${{ vars.REPORT_WITH_ARTIFACT || 'false' }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
             const withArtifact = process.env.REPORT_WITH_ARTIFACT === 'true';
-            const optionText = withArtifact
-              ? '옵션 2 적용: md 파일을 artifact로 업로드했고 아래 run 링크에서 확인할 수 있습니다.'
-              : '옵션 1 적용: 결과 파일은 커밋하지 않고 요약/경로만 남깁니다.';
-
             const safeContent = (process.env.NEWSLETTER_CONTENT || '').replace(/```/g, '`\u200B``');
 
             const body = [
