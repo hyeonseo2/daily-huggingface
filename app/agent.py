@@ -1,6 +1,6 @@
 # app/agent.py
 import os, math, json, datetime
-from typing import List, Dict, Any, Optional, Iterable, Tuple, Sequence
+from typing import List, Dict, Any, Optional, Iterable, Tuple, Sequence, Callable
 
 from .tools import hf_api
 from .tools import mcp_client as mcp
@@ -142,80 +142,61 @@ class DailyHuggingFaceAgent:
             )
         return normalized
 
+    def _collect_items(
+        self,
+        kind: str,
+        strategies: Sequence[Tuple[Callable[[int], List[Dict[str, Any]]], str]],
+        id_fields: Sequence[str],
+    ) -> List[Dict[str, Any]]:
+        combined = self._collect_from_mcp(kind, id_fields)
+        if combined:
+            filtered = self._filter_recent(combined)
+            if len(filtered) >= self.top_n:
+                return filtered[: self.top_n]
+
+        for fetcher, id_key in strategies:
+            recent_bucket, _ = self._split_recent_stale(combined)
+            if combined and len(combined) >= self.top_n and recent_bucket:
+                continue
+
+            raw = fetcher(self.top_n * 5)
+            normalized = hf_api.normalize_items(raw, id_key=id_key)
+            combined = self._merge_unique(combined, normalized)
+
+        return self._filter_recent(combined)[: self.top_n]
+
     # ---- 수집 ----
     def top_models(self) -> List[Dict[str, Any]]:
-        # 1) MCP 시도
-        combined = self._collect_from_mcp("model", ["id", "modelId"])
-        if combined:
-            filtered = self._filter_recent(combined)
-            if len(filtered) >= self.top_n:
-                return filtered[: self.top_n]
-
-        # 2) 폴백: REST - 최근 정렬 우선
-        recent_raw = hf_api.recent_models(limit=self.top_n * 5)
-        recent_norm = hf_api.normalize_items(recent_raw, id_key="modelId")
-        combined = self._merge_unique(combined, recent_norm) if combined else recent_norm
-        recent_bucket, _ = self._split_recent_stale(combined)
-        if len(combined) < self.top_n or not recent_bucket:
-            downloads_raw = hf_api.top_models_by_downloads(limit=self.top_n * 5)
-            downloads_norm = hf_api.normalize_items(downloads_raw, id_key="modelId")
-            combined = self._merge_unique(combined, downloads_norm)
-        filtered = self._filter_recent(combined)
-        return filtered[: self.top_n]
+        return self._collect_items(
+            kind="model",
+            strategies=[
+                (hf_api.recent_models, "modelId"),
+                (hf_api.top_models_by_downloads, "modelId"),
+            ],
+            id_fields=["id", "modelId"],
+        )
 
     def trending_datasets(self) -> List[Dict[str, Any]]:
-        combined = self._collect_from_mcp("dataset", ["id", "datasetId"])
-        if combined:
-            filtered = self._filter_recent(combined)
-            if len(filtered) >= self.top_n:
-                return filtered[: self.top_n]
-
-        # 1) 트렌딩 시도
-        raw = hf_api.trending("dataset", limit=self.top_n * 5)
-        if raw:
-            trending_norm = hf_api.normalize_items(raw, id_key="id")
-            combined = self._merge_unique(combined, trending_norm) if combined else trending_norm
-
-        recent_bucket, _ = self._split_recent_stale(combined)
-        if len(combined) < self.top_n or not recent_bucket:
-            recent_raw = hf_api.recent_datasets(limit=self.top_n * 5)
-            recent_norm = hf_api.normalize_items(recent_raw, id_key="id")
-            combined = self._merge_unique(combined, recent_norm)
-
-        recent_bucket, _ = self._split_recent_stale(combined)
-        if len(combined) < self.top_n or not recent_bucket:
-            alt = hf_api.top_datasets_by_downloads(limit=self.top_n * 5)
-            norm_alt = hf_api.normalize_items(alt, id_key="id")
-            combined = self._merge_unique(combined, norm_alt)
-
-        return self._filter_recent(combined)[: self.top_n]
+        return self._collect_items(
+            kind="dataset",
+            strategies=[
+                (lambda limit: hf_api.trending("dataset", limit=limit), "id"),
+                (hf_api.recent_datasets, "id"),
+                (hf_api.top_datasets_by_downloads, "id"),
+            ],
+            id_fields=["id", "datasetId"],
+        )
 
     def trending_spaces(self) -> List[Dict[str, Any]]:
-        combined = self._collect_from_mcp("space", ["id", "spaceId"])
-        if combined:
-            filtered = self._filter_recent(combined)
-            if len(filtered) >= self.top_n:
-                return filtered[: self.top_n]
-
-        # 1) 트렌딩 시도
-        raw = hf_api.trending("space", limit=self.top_n * 5)
-        if raw:
-            trending_norm = hf_api.normalize_items(raw, id_key="id")
-            combined = self._merge_unique(combined, trending_norm) if combined else trending_norm
-
-        recent_bucket, _ = self._split_recent_stale(combined)
-        if len(combined) < self.top_n or not recent_bucket:
-            recent_raw = hf_api.recent_spaces(limit=self.top_n * 5)
-            recent_norm = hf_api.normalize_items(recent_raw, id_key="id")
-            combined = self._merge_unique(combined, recent_norm)
-
-        recent_bucket, _ = self._split_recent_stale(combined)
-        if len(combined) < self.top_n or not recent_bucket:
-            alt = hf_api.top_spaces_by_likes(limit=self.top_n * 5)
-            norm_alt = hf_api.normalize_items(alt, id_key="id")
-            combined = self._merge_unique(combined, norm_alt)
-
-        return self._filter_recent(combined)[: self.top_n]
+        return self._collect_items(
+            kind="space",
+            strategies=[
+                (lambda limit: hf_api.trending("space", limit=limit), "id"),
+                (hf_api.recent_spaces, "id"),
+                (hf_api.top_spaces_by_likes, "id"),
+            ],
+            id_fields=["id", "spaceId"],
+        )
 
 
     # ---- 요약(옵션) ----
