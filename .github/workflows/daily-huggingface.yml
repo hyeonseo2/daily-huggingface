@@ -23,14 +23,12 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       issues: write
     outputs:
       newsletter_filename: ${{ steps.prepare.outputs.newsletter_filename }}
       newsletter_path: ${{ steps.prepare.outputs.newsletter_path }}
       newsletter_content: ${{ steps.collect.outputs.newsletter_content }}
-      models_count: ${{ steps.meta.outputs.models_count }}
-      datasets_count: ${{ steps.meta.outputs.datasets_count }}
-      spaces_count: ${{ steps.meta.outputs.spaces_count }}
 
     steps:
       - uses: actions/checkout@v4
@@ -105,6 +103,19 @@ jobs:
               out.write(f"spaces_count={spaces}\n")
           PY
 
+      - name: Commit and push newsletter file
+        run: |
+          target="${{ steps.prepare.outputs.newsletter_path }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$target"
+          if git diff --cached --quiet; then
+            echo "No newsletter changes to commit."
+          else
+            git commit -m "chore: update daily newsletter ${{ steps.prepare.outputs.newsletter_filename }} [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
       - name: Collect newsletter content (for issue)
         id: collect
         run: |
@@ -137,6 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: generate
     permissions:
+      contents: write
       issues: write
 
     steps:
@@ -145,9 +157,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           NEWSLETTER_FILENAME: ${{ needs.generate.outputs.newsletter_filename }}
-          NEWSLETTER_PATH: ${{ needs.generate.outputs.newsletter_path }}
           NEWSLETTER_CONTENT: ${{ needs.generate.outputs.newsletter_content }}
-          REPORT_WITH_ARTIFACT: ${{ vars.REPORT_WITH_ARTIFACT || 'false' }}
         with:
           script: |
             const safeContent = process.env.NEWSLETTER_CONTENT || '';
