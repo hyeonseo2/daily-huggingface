@@ -70,7 +70,11 @@ jobs:
       - name: Ensure newsletter is saved under newsletters
         run: |
           mkdir -p "${{ github.workspace }}/newsletters"
-          cp "${{ steps.prepare.outputs.newsletter_path }}" "${{ github.workspace }}/newsletters/${{ steps.prepare.outputs.newsletter_filename }}"
+          src="${{ steps.prepare.outputs.newsletter_path }}"
+          dst="${{ github.workspace }}/newsletters/${{ steps.prepare.outputs.newsletter_filename }}"
+          if [ "$src" != "$dst" ]; then
+            cp "$src" "$dst"
+          fi
 
       - name: Collect newsletter metadata
         id: meta
