@@ -84,7 +84,7 @@ jobs:
               if not match:
                   return 0
               body = match.group(1)
-              return len(re.findall(r"^- \\[", body, re.M))
+              return sum(1 for line in body.splitlines() if line.startswith("- ["))
 
           models = section_count("Trending Models")
           datasets = section_count("Trending Datasets")
