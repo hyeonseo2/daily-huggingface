@@ -1,11 +1,12 @@
 # app/agent.py
-import os, math, json, datetime
+import os, math, json, datetime, logging
 from typing import List, Dict, Any, Optional, Iterable, Tuple, Sequence
 
 from .tools import hf_api
 from .tools import mcp_client as mcp
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+logger = logging.getLogger(__name__)
 
 def _score(item: Dict[str, Any]) -> float:
     """간단 점수: log(downloads)*0.6 + log(likes)*0.3 + recency*0.1"""
@@ -42,7 +43,8 @@ class DailyHuggingFaceAgent:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=datetime.timezone.utc)
             return dt.astimezone(datetime.timezone.utc)
-        except Exception:
+        except Exception as err:
+            logger.warning("summarize_items failed for %s: %s", section_name, err)
             return None
 
     def _split_recent_stale(
@@ -247,5 +249,6 @@ class DailyHuggingFaceAgent:
             r.raise_for_status()
             j = r.json()
             return j["choices"][0]["message"]["content"].strip()
-        except Exception:
+        except Exception as err:
+            logger.warning("summarize_items failed for %s: %s", section_name, err)
             return None
