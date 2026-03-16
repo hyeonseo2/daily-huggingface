@@ -31,7 +31,7 @@ Daily HuggingFace generates a Markdown newsletter with trending Hugging Face mod
 
 This app creates a daily Markdown newsletter summarizing:
 
-- **Top Models**
+- **Trending Models**
 - **Trending Datasets**
 - **Trending Spaces**
 
@@ -187,7 +187,7 @@ Current tests cover MCP preference, recentness + fallback logic, and end-to-end 
 ```markdown
 # Daily HuggingFace — 2026-03-16
 
-## Top Models
+## Trending Models
 - [meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B) — downloads: 12345, likes: 678, lib: transformers
 
 ## Trending Datasets

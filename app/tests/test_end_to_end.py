@@ -46,7 +46,7 @@ def test_main_renders_expected_sections_and_links(monkeypatch, tmp_path):
 
     main.main()
 
-    assert "## Top Models" in captured["md"]
+    assert "## Trending Models" in captured["md"]
     assert "## Trending Datasets" in captured["md"]
     assert "## Trending Spaces" in captured["md"]
     assert "- [org/model-a](https://huggingface.co/org/model-a)" in captured["md"]

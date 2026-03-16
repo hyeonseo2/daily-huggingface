@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 MD_TPL = Template("""# Daily HuggingFace — {{ date_str }}
 
 {% if models %}
-## Top Models
+## Trending Models
 {% if models_summary %}> {{ models_summary }}
 {% endif %}{% for x in models %}- [{{x.id}}]({{x.link}}){% if x.meta %} — {{x.meta}}{% endif %}
 {% endfor %}{% endif %}
