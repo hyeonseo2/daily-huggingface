@@ -51,17 +51,17 @@
 
 ## Latest Papers
 - [Generation Models Know Space: Unleashing Implicit 3D Priors for Scene Understanding](https://huggingface.co/papers/2603.19235) — 👍 63
-- [Matryoshka Gaussian Splatting](https://huggingface.co/papers/2603.19234) — 👍 2
-- [Cubic Discrete Diffusion: Discrete Visual Generation on High-Dimensional Representation Tokens](https://huggingface.co/papers/2603.19232) — 👍 26
-- [MonoArt: Progressive Structural Reasoning for Monocular Articulated 3D Reconstruction](https://huggingface.co/papers/2603.19231) — 👍 28
 - [SAMA: Factorized Semantic Anchoring and Motion Alignment for Instruction-Guided Video Editing](https://huggingface.co/papers/2603.19228) — 👍 57
+- [FASTER: Rethinking Real-Time Flow VLAs](https://huggingface.co/papers/2603.19199) — 👍 41
+- [3DreamBooth: High-Fidelity 3D Subject-Driven Video Generation Model](https://huggingface.co/papers/2603.18524) — 👍 41
 - [Bridging Semantic and Kinematic Conditions with Diffusion-based Discrete Motion Tokenizer](https://huggingface.co/papers/2603.19227) — 👍 34
-- [EffectErase: Joint Video Object Removal and Insertion for High-Quality Effect Erasing](https://huggingface.co/papers/2603.19224) — 👍 15
-- [F2LLM-v2: Inclusive, Performant, and Efficient Embeddings for a Multilingual World](https://huggingface.co/papers/2603.19223) — 👍 21
+- [MonoArt: Progressive Structural Reasoning for Monocular Articulated 3D Reconstruction](https://huggingface.co/papers/2603.19231) — 👍 28
 - [Nemotron-Cascade 2: Post-Training LLMs with Cascade RL and Multi-Domain On-Policy Distillation](https://huggingface.co/papers/2603.19220) — 👍 28
+- [Cubic Discrete Diffusion: Discrete Visual Generation on High-Dimensional Representation Tokens](https://huggingface.co/papers/2603.19232) — 👍 26
 - [LVOmniBench: Pioneering Long Audio-Video Understanding Evaluation for Omnimodal LLMs](https://huggingface.co/papers/2603.19217) — 👍 26
-- [DreamPartGen: Semantically Grounded Part-Level 3D Generation via Collaborative Latent Denoising](https://huggingface.co/papers/2603.19216) — 👍 0
-- [Tinted Frames: Question Framing Blinds Vision-Language Models](https://huggingface.co/papers/2603.19203) — 👍 13
+- [Memento-Skills: Let Agents Design Agents](https://huggingface.co/papers/2603.18743) — 👍 24
+- [F2LLM-v2: Inclusive, Performant, and Efficient Embeddings for a Multilingual World](https://huggingface.co/papers/2603.19223) — 👍 21
+- [LoST: Level of Semantics Tokenization for 3D Shapes](https://huggingface.co/papers/2603.17995) — 👍 21
 
 
 
