@@ -15,6 +15,7 @@ def _score(item: Dict[str, Any]) -> float:
 
     d = math.log10(_safe_num(item.get("downloads")) + 1)
     l = math.log10(_safe_num(item.get("likes")) + 1)
+    up = math.log10(_safe_num(item.get("upvotes")) + 1)
     rec = 0.0
     ts = item.get("updatedAt")
     if ts:
@@ -27,7 +28,7 @@ def _score(item: Dict[str, Any]) -> float:
             rec = max(0.0, 1.0 - min(days, 30) / 30.0)
         except Exception:
             pass
-    return 0.6 * d + 0.3 * l + 0.1 * rec
+    return 0.5 * d + 0.25 * l + 0.15 * up + 0.1 * rec
 
 
 class DailyHuggingFaceAgent:
@@ -144,10 +145,14 @@ class DailyHuggingFaceAgent:
                     "link": link,
                     "downloads": it.get("downloads"),
                     "likes": it.get("likes"),
+                    "upvotes": it.get("upvotes"),
                     "library": it.get("library_name") or it.get("library"),
                     "updatedAt": updated_at,
                     "createdAt": it.get("createdAt"),
                     "lastModified": last_modified,
+                    "title": it.get("title"),
+                    "summary": it.get("summary"),
+                    "authors": it.get("authors"),
                 }
             )
         return normalized
@@ -165,13 +170,12 @@ class DailyHuggingFaceAgent:
                 return filtered[: self.top_n]
 
         for fetcher, id_key in strategies:
-            recent_bucket, _ = self._split_recent_stale(combined)
-            if combined and len(combined) >= self.top_n and recent_bucket:
-                continue
-
-            raw = fetcher(self.top_n * 5)
-            normalized = hf_api.normalize_items(raw, id_key=id_key)
+            raw_bucket = fetcher(self.top_n * 5)
+            normalized = hf_api.normalize_items(raw_bucket, id_key=id_key)
             combined = self._merge_unique(combined, normalized)
+
+            if len(combined) >= self.top_n:
+                break
 
         return self._filter_recent(combined)[: self.top_n]
 
@@ -208,6 +212,13 @@ class DailyHuggingFaceAgent:
             ],
             id_fields=["id", "spaceId"],
         )
+
+    def latest_blogs(self, limit: int = 5) -> List[Dict[str, Any]]:
+        return hf_api.latest_blog_posts(limit=limit)
+
+    def daily_papers(self, date: Optional[str], limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        fetch_limit = limit or self.top_n
+        return hf_api.papers_for_date(date=date, limit=fetch_limit)
 
     # ---- 요약(옵션) ----
     def summarize_items(self, section_name: str, items: List[Dict[str, Any]]) -> Optional[str]:

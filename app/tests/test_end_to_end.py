@@ -25,19 +25,35 @@ class _FakeAgent:
     def trending_spaces(self):
         return [{"id": "org/space-a", "link": "https://huggingface.co/spaces/org/space-a", "likes": 5}]
 
+    def latest_blogs(self, limit: int = 5):
+        return [{"id": "blog-a", "title": "Latest Blog A", "link": "https://huggingface.co/blog/blog-a"}]
+
+    def daily_papers(self, date: str, limit: int = 12):
+        return [{"id": "2401.12345", "title": "Paper A", "link": "https://huggingface.co/papers/2401.12345", "upvotes": 12}]
+
     def summarize_items(self, section_name, items):
         return f"summary for {section_name}" if items else None
 
 
 def test_main_renders_expected_sections_and_links(monkeypatch, tmp_path):
     monkeypatch.setattr(main, "DailyHuggingFaceAgent", _FakeAgent)
-    monkeypatch.setattr(main, "_today_kst_str", lambda: "2026-01-02")
     monkeypatch.setenv("NEWSLETTER_OUTPUT_DIR", str(tmp_path))
+    monkeypatch.setenv("NEWSLETTER_BLOG_TOP_N", "2")
+    monkeypatch.setattr(main, "_today_kst_str", lambda: "2026-01-02")
 
     captured = {}
 
-    def _capture_render_md(models, datasets, spaces, summaries, date_str, out_path):
-        md = real_render_md(models, datasets, spaces, summaries, date_str=date_str, out_path=out_path)
+    def _capture_render_md(models, datasets, spaces, summaries, date_str, out_path, blogs=None, papers=None):
+        md = real_render_md(
+            models,
+            datasets,
+            spaces,
+            summaries,
+            date_str=date_str,
+            out_path=out_path,
+            blogs=blogs,
+            papers=papers,
+        )
         captured["md"] = md
         captured["out_path"] = out_path
         return md
@@ -49,9 +65,13 @@ def test_main_renders_expected_sections_and_links(monkeypatch, tmp_path):
     assert "## Trending Models" in captured["md"]
     assert "## Trending Datasets" in captured["md"]
     assert "## Trending Spaces" in captured["md"]
+    assert "## Latest Blogs" in captured["md"]
+    assert "## Latest Papers" in captured["md"]
     assert "- [org/model-a](https://huggingface.co/org/model-a)" in captured["md"]
     assert "- [org/dataset-a](https://huggingface.co/datasets/org/dataset-a)" in captured["md"]
     assert "- [org/space-a](https://huggingface.co/spaces/org/space-a)" in captured["md"]
+    assert "- [Latest Blog A](https://huggingface.co/blog/blog-a)" in captured["md"]
+    assert "- [Paper A](https://huggingface.co/papers/2401.12345)" in captured["md"]
 
     output_file = Path(captured["out_path"])
     assert output_file.parent == tmp_path
