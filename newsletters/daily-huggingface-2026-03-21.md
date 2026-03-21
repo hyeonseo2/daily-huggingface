@@ -42,32 +42,32 @@
 - [spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster](https://hf.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster) — ❤️ 2853.0
 - [spaces/not-lain/background-removal](https://hf.co/spaces/not-lain/background-removal) — ❤️ 2749.0
 - [spaces/openai/whisper](https://hf.co/spaces/openai/whisper) — ❤️ 2742.0
-- [spaces/mrfakename/Z-Image-Turbo](https://hf.co/spaces/mrfakename/Z-Image-Turbo) — ❤️ 2599.0
+- [spaces/mrfakename/Z-Image-Turbo](https://hf.co/spaces/mrfakename/Z-Image-Turbo) — ❤️ 2600.0
 - [spaces/tencent/Hunyuan3D-2.1](https://hf.co/spaces/tencent/Hunyuan3D-2.1) — ❤️ 2119.0
 - [spaces/yisol/IDM-VTON](https://hf.co/spaces/yisol/IDM-VTON) — ❤️ 2085.0
 - [spaces/linoyts/Qwen-Image-Edit-Angles](https://hf.co/spaces/linoyts/Qwen-Image-Edit-Angles) — ❤️ 2079.0
 
 
 
-## Latest Blogs
-- [Build a Domain-Specific Embedding Model in Under a Day](https://huggingface.co/blog/nvidia/domain-specific-embedding-finetune)
-- [What's New in Mellea 0.4.0 + Granite Libraries Release](https://huggingface.co/blog/ibm-granite/granite-libraries)
-- [State of Open Source on Hugging Face: Spring 2026](https://huggingface.co/blog/huggingface/state-of-os-hf-spring-2026)
-- [Holotron-12B - High Throughput Computer Use Agent](https://huggingface.co/blog/Hcompany/holotron-12b)
-- [Introducing Storage Buckets on the Hugging Face Hub](https://huggingface.co/blog/storage-buckets)
-
-
-
 ## Latest Papers
-- [Generation Models Know Space: Unleashing Implicit 3D Priors for Scene Understanding](https://huggingface.co/papers/2603.19235) — 👍 63 • 🗓 2026-03-19 • ✍️ Xianjin Wu, Dingkang Liang
-- [Matryoshka Gaussian Splatting](https://huggingface.co/papers/2603.19234) — 👍 2 • 🗓 2026-03-19 • ✍️ Zhilin Guo, Boqiao Zhang
-- [Cubic Discrete Diffusion: Discrete Visual Generation on High-Dimensional Representation Tokens](https://huggingface.co/papers/2603.19232) — 👍 26 • 🗓 2026-03-19 • ✍️ Yuqing Wang, Chuofan Ma
-- [MonoArt: Progressive Structural Reasoning for Monocular Articulated 3D Reconstruction](https://huggingface.co/papers/2603.19231) — 👍 28 • 🗓 2026-03-19 • ✍️ Haitian Li, Haozhe Xie
-- [SAMA: Factorized Semantic Anchoring and Motion Alignment for Instruction-Guided Video Editing](https://huggingface.co/papers/2603.19228) — 👍 57 • 🗓 2026-03-19 • ✍️ Xinyao Zhang, Wenkai Dong
-- [Bridging Semantic and Kinematic Conditions with Diffusion-based Discrete Motion Tokenizer](https://huggingface.co/papers/2603.19227) — 👍 34 • 🗓 2026-03-19 • ✍️ Chenyang Gu, Mingyuan Zhang
-- [EffectErase: Joint Video Object Removal and Insertion for High-Quality Effect Erasing](https://huggingface.co/papers/2603.19224) — 👍 15 • 🗓 2026-03-19 • ✍️ Yang Fu, Yike Zheng
-- [F2LLM-v2: Inclusive, Performant, and Efficient Embeddings for a Multilingual World](https://huggingface.co/papers/2603.19223) — 👍 21 • 🗓 2026-03-19 • ✍️ Ziyin Zhang, Zihan Liao
-- [Nemotron-Cascade 2: Post-Training LLMs with Cascade RL and Multi-Domain On-Policy Distillation](https://huggingface.co/papers/2603.19220) — 👍 28 • 🗓 2026-03-19 • ✍️ Zhuolin Yang, Zihan Liu
-- [LVOmniBench: Pioneering Long Audio-Video Understanding Evaluation for Omnimodal LLMs](https://huggingface.co/papers/2603.19217) — 👍 26 • 🗓 2026-03-19 • ✍️ Keda Tao, Yuhua Zheng
-- [DreamPartGen: Semantically Grounded Part-Level 3D Generation via Collaborative Latent Denoising](https://huggingface.co/papers/2603.19216) — 👍 0 • 🗓 2026-03-19 • ✍️ Tianjiao Yu, Xinzhuo Li
-- [Tinted Frames: Question Framing Blinds Vision-Language Models](https://huggingface.co/papers/2603.19203) — 👍 13 • 🗓 2026-03-19 • ✍️ Wan-Cyuan Fan, Jiayun Luo
+- [Generation Models Know Space: Unleashing Implicit 3D Priors for Scene Understanding](https://huggingface.co/papers/2603.19235) — 👍 63
+- [Matryoshka Gaussian Splatting](https://huggingface.co/papers/2603.19234) — 👍 2
+- [Cubic Discrete Diffusion: Discrete Visual Generation on High-Dimensional Representation Tokens](https://huggingface.co/papers/2603.19232) — 👍 26
+- [MonoArt: Progressive Structural Reasoning for Monocular Articulated 3D Reconstruction](https://huggingface.co/papers/2603.19231) — 👍 28
+- [SAMA: Factorized Semantic Anchoring and Motion Alignment for Instruction-Guided Video Editing](https://huggingface.co/papers/2603.19228) — 👍 57
+- [Bridging Semantic and Kinematic Conditions with Diffusion-based Discrete Motion Tokenizer](https://huggingface.co/papers/2603.19227) — 👍 34
+- [EffectErase: Joint Video Object Removal and Insertion for High-Quality Effect Erasing](https://huggingface.co/papers/2603.19224) — 👍 15
+- [F2LLM-v2: Inclusive, Performant, and Efficient Embeddings for a Multilingual World](https://huggingface.co/papers/2603.19223) — 👍 21
+- [Nemotron-Cascade 2: Post-Training LLMs with Cascade RL and Multi-Domain On-Policy Distillation](https://huggingface.co/papers/2603.19220) — 👍 28
+- [LVOmniBench: Pioneering Long Audio-Video Understanding Evaluation for Omnimodal LLMs](https://huggingface.co/papers/2603.19217) — 👍 26
+- [DreamPartGen: Semantically Grounded Part-Level 3D Generation via Collaborative Latent Denoising](https://huggingface.co/papers/2603.19216) — 👍 0
+- [Tinted Frames: Question Framing Blinds Vision-Language Models](https://huggingface.co/papers/2603.19203) — 👍 13
+
+
+
+## Latest Blogs
+- [Build a Domain-Specific Embedding Model in Under a Day](https://huggingface.co/blog/nvidia/domain-specific-embedding-finetune) — 👍 6
+- [What's New in Mellea 0.4.0 + Granite Libraries Release](https://huggingface.co/blog/ibm-granite/granite-libraries) — 👍 2
+- [State of Open Source on Hugging Face: Spring 2026](https://huggingface.co/blog/huggingface/state-of-os-hf-spring-2026) — 👍 53
+- [Holotron-12B - High Throughput Computer Use Agent](https://huggingface.co/blog/Hcompany/holotron-12b) — 👍 12
+- [Introducing Storage Buckets on the Hugging Face Hub](https://huggingface.co/blog/storage-buckets) — 👍 183
