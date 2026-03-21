@@ -218,3 +218,35 @@ def test_papers_falls_back_to_previous_day(monkeypatch):
     assert papers[0]["link"] == "https://huggingface.co/papers/2603.19235"
     assert papers[0]["title"].startswith("Generation Models Know Space")
     assert papers[0]["authors"] == ["Xianjin Wu", "Dingkang Liang"]
+
+
+def test_papers_sorted_by_upvotes_desc(monkeypatch):
+    def fake_get(url, **kwargs):
+        date = kwargs.get("params", {}).get("date")
+        assert date == "2026-03-21"
+        return DummyResponse(
+            payload=[
+                {
+                    "id": "a",
+                    "title": "Lower upvotes",
+                    "upvotes": 2,
+                    "publishedAt": "2026-03-21T10:00:00.000Z",
+                },
+                {
+                    "id": "b",
+                    "title": "Higher upvotes",
+                    "upvotes": 15,
+                    "publishedAt": "2026-03-21T09:00:00.000Z",
+                },
+                {
+                    "id": "c",
+                    "title": "Missing upvotes",
+                    "publishedAt": "2026-03-21T08:00:00.000Z",
+                },
+            ]
+        )
+
+    monkeypatch.setattr("app.tools.hf_api.requests.get", fake_get)
+
+    papers = hf_api.papers_for_date(date="2026-03-21", limit=5)
+    assert [x["id"] for x in papers] == ["b", "a", "c"]

@@ -34,6 +34,8 @@ This app creates a daily Markdown newsletter summarizing:
 - **Trending Models**
 - **Trending Datasets**
 - **Trending Spaces**
+- **Latest Papers**
+- **Latest Blogs**
 
 It applies recency-first prioritization and fallback to REST API when MCP is unavailable.
 
@@ -116,7 +118,8 @@ Then query tools and try a sample search with `repo_types`.
 | `MCP_URL` | MCP endpoint (recommended `https://huggingface.co/mcp`) | optional | empty |
 | `NEWSLETTER_OUTPUT_DIR` | Output directory | optional | `newsletters/` |
 | `OPENAI_API_KEY` | Optional OpenAI key for section summaries | optional | empty |
-| `NEWSLETTER_TOP_N` | Number of items per section | optional | `12` |
+| `NEWSLETTER_TOP_N` | Number of items per section (models/datasets/spaces) | optional | `12` |
+| `NEWSLETTER_BLOG_TOP_N` | Number of latest blogs to include | optional | `5` |
 | `TZ` | Timezone | optional | `Asia/Seoul` |
 
 ---
@@ -195,6 +198,13 @@ Current tests cover MCP preference, recentness + fallback logic, and end-to-end 
 
 ## Trending Spaces
 - [stabilityai/stable-diffusion-demo](https://huggingface.co/spaces/stabilityai/stable-diffusion-demo) — ❤️ 2000
+
+## Latest Papers
+- [2406.12345](https://huggingface.co/papers/2406.12345) — 👍 120
+
+## Latest Blogs
+- [Build a Domain-Specific Embedding Model in Under a Day](https://huggingface.co/blog/nvidia/domain-specific-embedding-finetune) — 👍 63
+
 ```
 
 ---

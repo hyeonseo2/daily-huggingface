@@ -228,7 +228,14 @@ def _normalize_papers_raw(raw: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "raw_published": dt,
             }
         )
-    out.sort(key=lambda x: x.get("raw_published") or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc), reverse=True)
+
+    out.sort(
+        key=lambda x: (
+            x.get("upvotes") if isinstance(x.get("upvotes"), (int, float)) else -1,
+            x.get("raw_published") or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc),
+        ),
+        reverse=True,
+    )
     return out
 
 
