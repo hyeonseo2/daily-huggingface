@@ -11,6 +11,7 @@ BASE = "https://huggingface.co"
 HF_TOKEN = os.getenv("HF_TOKEN", "").strip()
 
 BLOG_FEED_URL = "https://huggingface.co/blog/feed.xml"
+BLOG_API_URL = "https://huggingface.co/api/blog"
 PAPERS_API_URL = "https://huggingface.co/api/papers"
 
 logger = logging.getLogger(__name__)
@@ -276,7 +277,64 @@ def papers_for_date(date: Optional[str] = None, limit: int = 12) -> List[Dict[st
 
 
 def latest_blog_posts(limit: int = 5) -> List[Dict[str, Any]]:
-    """Fetch latest blog posts from HF RSS feed."""
+    """Fetch latest blog posts from HF API with RSS fallback."""
+    # Preferred: API (richer metadata including upvotes).
+    try:
+        r = requests.get(BLOG_API_URL, headers=_headers(), timeout=30)
+        r.raise_for_status()
+        payload = r.json() or {}
+        raw = payload.get("allBlogs") if isinstance(payload, dict) else None
+        items = []
+        if isinstance(raw, list):
+            for entry in raw[:limit]:
+                if not isinstance(entry, dict):
+                    continue
+                slug = entry.get("slug")
+                url = entry.get("url")
+                if not url or not slug:
+                    continue
+
+                link = url if url.startswith("http") else f"{BASE}{url}"
+                pub = entry.get("publishedAt")
+                pub_iso = None
+                try:
+                    if pub:
+                        dt = datetime.datetime.fromisoformat(pub.replace("Z", "+00:00"))
+                        pub_iso = _to_iso(dt)
+                except Exception:
+                    pub_iso = None
+
+                authors = [a.get("name") for a in entry.get("authorsData", []) if isinstance(a, dict) and a.get("name")]
+
+                items.append(
+                    {
+                        "id": slug,
+                        "title": entry.get("title") or slug,
+                        "link": link,
+                        "upvotes": entry.get("upvotes"),
+                        "publishedAt": pub_iso,
+                        "updatedAt": pub_iso,
+                        "createdAt": pub_iso,
+                        "raw_published": dt if "dt" in locals() else None,
+                        "authors": authors,
+                    }
+                )
+
+                if len(items) >= limit:
+                    break
+
+        items.sort(key=lambda x: x.get("raw_published") or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc), reverse=True)
+        items = items[:limit]
+        if items:
+            return items
+    except requests.HTTPError as err:
+        logger.warning("hf_api.latest_blog_posts api call failed: %s", err)
+    except requests.RequestException as err:
+        logger.warning("hf_api.latest_blog_posts api request failed: %s", err)
+    except Exception as err:
+        logger.warning("hf_api.latest_blog_posts api unexpected error: %s", err)
+
+    # Fallback: RSS feed (lightweight)
     try:
         r = requests.get(BLOG_FEED_URL, headers=_headers(), timeout=30)
         r.raise_for_status()
@@ -292,15 +350,15 @@ def latest_blog_posts(limit: int = 5) -> List[Dict[str, Any]]:
             if not link:
                 continue
             pid = link.split("/blog/")[-1] if "/blog/" in link else link
-            guid = _parse_xml_text(item.find("guid")) or link
 
             pub_raw = _parse_xml_text(item.find("pubDate"))
             pub_iso = None
+            dt_local = None
             try:
                 if pub_raw:
-                    dt = parsedate_to_datetime(pub_raw)
-                    if dt:
-                        pub_iso = _to_iso(dt)
+                    dt_local = parsedate_to_datetime(pub_raw)
+                    if dt_local:
+                        pub_iso = _to_iso(dt_local)
             except Exception:
                 pub_iso = None
 
@@ -312,23 +370,21 @@ def latest_blog_posts(limit: int = 5) -> List[Dict[str, Any]]:
                     "publishedAt": pub_iso,
                     "updatedAt": pub_iso,
                     "createdAt": pub_iso,
-                    "guid": guid,
-                    "raw_published": dt if "dt" in locals() else None,
+                    "raw_published": dt_local,
                 }
             )
 
             if len(items) >= limit:
                 break
 
-        # sort descending by pub date when available
         items.sort(key=lambda x: x.get("raw_published") or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc), reverse=True)
         return items[:limit]
 
     except requests.HTTPError as err:
-        logger.warning("hf_api.latest_blog_posts failed: %s", err)
+        logger.warning("hf_api.latest_blog_posts rss failed: %s", err)
         return []
     except requests.RequestException as err:
-        logger.warning("hf_api.latest_blog_posts request failed: %s", err)
+        logger.warning("hf_api.latest_blog_posts rss request failed: %s", err)
         return []
     except ET.ParseError as err:
         logger.warning("hf_api.latest_blog_posts parse error: %s", err)

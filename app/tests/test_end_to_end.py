@@ -26,7 +26,7 @@ class _FakeAgent:
         return [{"id": "org/space-a", "link": "https://huggingface.co/spaces/org/space-a", "likes": 5}]
 
     def latest_blogs(self, limit: int = 5):
-        return [{"id": "blog-a", "title": "Latest Blog A", "link": "https://huggingface.co/blog/blog-a"}]
+        return [{"id": "blog-a", "title": "Latest Blog A", "link": "https://huggingface.co/blog/blog-a", "upvotes": 21}]
 
     def daily_papers(self, date: str, limit: int = 12):
         return [{"id": "2401.12345", "title": "Paper A", "link": "https://huggingface.co/papers/2401.12345", "upvotes": 12}]
@@ -65,13 +65,22 @@ def test_main_renders_expected_sections_and_links(monkeypatch, tmp_path):
     assert "## Trending Models" in captured["md"]
     assert "## Trending Datasets" in captured["md"]
     assert "## Trending Spaces" in captured["md"]
+    # order check
+    assert captured["md"].index("## Latest Papers") < captured["md"].index("## Latest Blogs")
     assert "## Latest Blogs" in captured["md"]
     assert "## Latest Papers" in captured["md"]
+
     assert "- [org/model-a](https://huggingface.co/org/model-a)" in captured["md"]
     assert "- [org/dataset-a](https://huggingface.co/datasets/org/dataset-a)" in captured["md"]
     assert "- [org/space-a](https://huggingface.co/spaces/org/space-a)" in captured["md"]
     assert "- [Latest Blog A](https://huggingface.co/blog/blog-a)" in captured["md"]
     assert "- [Paper A](https://huggingface.co/papers/2401.12345)" in captured["md"]
+
+    # blogs and papers should show only upvotes metadata
+    assert "👍 12" in captured["md"]  # paper
+    assert "👍 21" in captured["md"]  # blog
+    # no extra metrics for papers/blogs
+    assert "⬇️" not in "\n".join([line for line in captured["md"].splitlines() if "Paper A" in line or "Latest Blog A" in line])
 
     output_file = Path(captured["out_path"])
     assert output_file.parent == tmp_path

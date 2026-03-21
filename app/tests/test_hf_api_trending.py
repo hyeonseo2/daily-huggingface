@@ -107,17 +107,75 @@ def test_blog_feed_parses_latest_items(monkeypatch):
     </rss>
     """
 
+    calls = []
+
     def fake_get(url, **kwargs):
+        calls.append(url)
+        if url.endswith('/api/blog'):
+            raise AssertionError('API should not be called in RSS fallback test')
         return DummyResponse(payload=sample_xml)
 
     monkeypatch.setattr("app.tools.hf_api.requests.get", fake_get)
+
     posts = hf_api.latest_blog_posts(limit=5)
 
+    assert calls == [
+        'https://huggingface.co/api/blog',
+        'https://huggingface.co/blog/feed.xml'
+    ]
     assert len(posts) == 2
     assert posts[0]["id"] == "nvidia/domain-specific-embedding-finetune"
     assert posts[0]["title"] == "Build a Domain-Specific Embedding Model in Under a Day"
     assert posts[0]["link"] == "https://huggingface.co/blog/nvidia/domain-specific-embedding-finetune"
     assert posts[1]["id"] == "another"
+
+
+def test_blog_api_preferred_when_available(monkeypatch):
+    sample_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0"><channel></channel></rss>"""
+
+    calls = []
+
+    def fake_get(url, **kwargs):
+        calls.append(url)
+        if url.endswith("/api/blog"):
+            return DummyResponse(
+                payload={
+                    "allBlogs": [
+                        {
+                            "slug": "domain-specific-embedding-finetune",
+                            "title": "Build a Domain-Specific Embedding Model in Under a Day",
+                            "url": "/blog/nvidia/domain-specific-embedding-finetune",
+                            "upvotes": 6,
+                            "publishedAt": "2026-03-20T19:38:16.078Z",
+                            "authorsData": [
+                                {"name": "NVIDIA"},
+                                {"name": "Author2"},
+                            ],
+                        },
+                        {
+                            "slug": "granite-libraries",
+                            "title": "What's New in Mellea 0.4.0 + Granite Libraries Release",
+                            "url": "/blog/granite-libraries",
+                            "upvotes": 2,
+                            "publishedAt": "2026-03-19T14:14:46.490Z",
+                            "authorsData": [],
+                        },
+                    ]
+                }
+            )
+        return DummyResponse(payload=sample_xml)
+
+    monkeypatch.setattr("app.tools.hf_api.requests.get", fake_get)
+
+    posts = hf_api.latest_blog_posts(limit=5)
+
+    assert len(calls) == 1
+    assert calls[0].endswith('/api/blog')
+    assert posts[0]["id"] == "domain-specific-embedding-finetune"
+    assert posts[0]["upvotes"] == 6
+    assert posts[0]["authors"] == ["NVIDIA", "Author2"]
+    assert posts[0]["link"] == "https://huggingface.co/blog/nvidia/domain-specific-embedding-finetune"
 
 
 def test_papers_falls_back_to_previous_day(monkeypatch):
