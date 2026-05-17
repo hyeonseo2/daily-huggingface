@@ -1,0 +1,73 @@
+# Daily HuggingFace — 2026-05-18
+
+
+## Trending Models
+- [hexgrad/Kokoro-82M](https://hf.co/hexgrad/Kokoro-82M) — ⬇️ 9700000.0 • ❤️ 6159.0
+- [google/gemma-4-31B-it](https://hf.co/google/gemma-4-31B-it) — ⬇️ 9900000.0 • ❤️ 2666.0
+- [google/gemma-4-26B-A4B-it](https://hf.co/google/gemma-4-26B-A4B-it) — ⬇️ 8400000.0 • ❤️ 960.0
+- [Qwen/Qwen3.6-35B-A3B](https://hf.co/Qwen/Qwen3.6-35B-A3B) — ⬇️ 5500000.0 • ❤️ 1797.0
+- [deepseek-ai/DeepSeek-V4-Pro](https://hf.co/deepseek-ai/DeepSeek-V4-Pro) — ⬇️ 3100000.0 • ❤️ 4010.0
+- [google/gemma-4-E4B-it](https://hf.co/google/gemma-4-E4B-it) — ⬇️ 6100000.0 • ❤️ 1016.0
+- [Qwen/Qwen3.6-27B](https://hf.co/Qwen/Qwen3.6-27B) — ⬇️ 3400000.0 • ❤️ 1315.0
+- [unsloth/gemma-4-26B-A4B-it-GGUF](https://hf.co/unsloth/gemma-4-26B-A4B-it-GGUF) — ⬇️ 3300000.0 • ❤️ 742.0
+- [unsloth/Qwen3.6-35B-A3B-GGUF](https://hf.co/unsloth/Qwen3.6-35B-A3B-GGUF) — ⬇️ 2700000.0 • ❤️ 1049.0
+- [moonshotai/Kimi-K2.6](https://hf.co/moonshotai/Kimi-K2.6) — ⬇️ 2200000.0 • ❤️ 1291.0
+- [Lightricks/LTX-2.3](https://hf.co/Lightricks/LTX-2.3) — ⬇️ 2000000.0 • ❤️ 1192.0
+- [k2-fsa/OmniVoice](https://hf.co/k2-fsa/OmniVoice) — ⬇️ 2100000.0 • ❤️ 896.0
+
+
+
+## Trending Datasets
+- [datasets/HuggingFaceFW/fineweb](https://hf.co/datasets/HuggingFaceFW/fineweb) — ⬇️ 922500.0 • ❤️ 2799.0
+- [datasets/openai/gsm8k](https://hf.co/datasets/openai/gsm8k) — ⬇️ 921700.0 • ❤️ 1314.0
+- [datasets/HuggingFaceFW/fineweb-edu](https://hf.co/datasets/HuggingFaceFW/fineweb-edu) — ⬇️ 579900.0 • ❤️ 1078.0
+- [datasets/cais/mmlu](https://hf.co/datasets/cais/mmlu) — ⬇️ 533900.0 • ❤️ 737.0
+- [datasets/nvidia/PhysicalAI-Autonomous-Vehicles](https://hf.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles) — ⬇️ 207100.0 • ❤️ 874.0
+- [datasets/Idavidrein/gpqa](https://hf.co/datasets/Idavidrein/gpqa) — ⬇️ 139700.0 • ❤️ 436.0
+- [datasets/nvidia/Nemotron-Personas-Korea](https://hf.co/datasets/nvidia/Nemotron-Personas-Korea) — ⬇️ 82400.0 • ❤️ 455.0
+- [datasets/databricks/databricks-dolly-15k](https://hf.co/datasets/databricks/databricks-dolly-15k) — ⬇️ 33500.0 • ❤️ 963.0
+- [datasets/mvp-lab/LLaVA-OneVision-2-Data](https://hf.co/datasets/mvp-lab/LLaVA-OneVision-2-Data) — ⬇️ 93600.0 • ❤️ 13.0
+- [datasets/PsiBotAI/SynData](https://hf.co/datasets/PsiBotAI/SynData) — ⬇️ 29300.0 • ❤️ 137.0
+- [datasets/ADSKAILab/Zero-To-CAD-1m](https://hf.co/datasets/ADSKAILab/Zero-To-CAD-1m) — ⬇️ 23400.0 • ❤️ 113.0
+- [datasets/lmsys/lmsys-chat-1m](https://hf.co/datasets/lmsys/lmsys-chat-1m) — ⬇️ 8300.0 • ❤️ 888.0
+
+
+
+## Trending Spaces
+- [spaces/mteb/leaderboard](https://hf.co/spaces/mteb/leaderboard) — ❤️ 7382.0
+- [spaces/nanotron/ultrascale-playbook](https://hf.co/spaces/nanotron/ultrascale-playbook) — ❤️ 3845.0
+- [spaces/tencent/Hunyuan3D-2](https://hf.co/spaces/tencent/Hunyuan3D-2) — ❤️ 3277.0
+- [spaces/akhaliq/anycoder](https://hf.co/spaces/akhaliq/anycoder) — ❤️ 3268.0
+- [spaces/HuggingFaceTB/smol-training-playbook](https://hf.co/spaces/HuggingFaceTB/smol-training-playbook) — ❤️ 3176.0
+- [spaces/mrfakename/Z-Image-Turbo](https://hf.co/spaces/mrfakename/Z-Image-Turbo) — ❤️ 3172.0
+- [spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster](https://hf.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster) — ❤️ 3080.0
+- [spaces/r3gm/wan2-2-fp8da-aoti-preview](https://hf.co/spaces/r3gm/wan2-2-fp8da-aoti-preview) — ❤️ 2607.0
+- [spaces/multimodalart/qwen-image-multiple-angles-3d-camera](https://hf.co/spaces/multimodalart/qwen-image-multiple-angles-3d-camera) — ❤️ 2474.0
+- [spaces/ggml-org/gguf-my-repo](https://hf.co/spaces/ggml-org/gguf-my-repo) — ❤️ 1958.0
+- [spaces/DontPlanToEnd/UGI-Leaderboard](https://hf.co/spaces/DontPlanToEnd/UGI-Leaderboard) — ❤️ 1770.0
+- [spaces/selfit-camera/Omni-Image-Editor](https://hf.co/spaces/selfit-camera/Omni-Image-Editor) — ❤️ 1706.0
+
+
+
+## Latest Papers
+- [Self-Distilled Agentic Reinforcement Learning](https://huggingface.co/papers/2605.15155) — 👍 84
+- [Causal Forcing++: Scalable Few-Step Autoregressive Diffusion Distillation for Real-Time Interactive Video Generation](https://huggingface.co/papers/2605.15141) — 👍 84
+- [MemLens: Benchmarking Multimodal Long-Term Memory in Large Vision-Language Models](https://huggingface.co/papers/2605.14906) — 👍 68
+- [SANA-WM: Efficient Minute-Scale World Modeling with Hybrid Linear Diffusion Transformer](https://huggingface.co/papers/2605.15178) — 👍 67
+- [MemEye: A Visual-Centric Evaluation Framework for Multimodal Agent Memory](https://huggingface.co/papers/2605.15128) — 👍 55
+- [Beyond Individual Intelligence: Surveying Collaboration, Failure Attribution, and Self-Evolution in LLM-based Multi-Agent Systems](https://huggingface.co/papers/2605.14892) — 👍 44
+- [Warp-as-History: Generalizable Camera-Controlled Video Generation from One Training Video](https://huggingface.co/papers/2605.15182) — 👍 37
+- [VGGT-Edit: Feed-forward Native 3D Scene Editing with Residual Field Prediction](https://huggingface.co/papers/2605.15186) — 👍 23
+- [ATLAS: Agentic or Latent Visual Reasoning? One Word is Enough for Both](https://huggingface.co/papers/2605.15198) — 👍 17
+- [DiffusionOPD: A Unified Perspective of On-Policy Distillation in Diffusion Models](https://huggingface.co/papers/2605.15055) — 👍 14
+- [Orchard: An Open-Source Agentic Modeling Framework](https://huggingface.co/papers/2605.15040) — 👍 14
+- [IntentVLA: Short-Horizon Intent Modeling for Aliased Robot Manipulation](https://huggingface.co/papers/2605.14712) — 👍 14
+
+
+
+## Latest Blogs
+- [Granite Embedding Multilingual R2: Open Apache 2.0 Multilingual Embeddings with 32K Context — Best Sub-100M Retrieval Quality](https://huggingface.co/blog/ibm-granite/granite-embedding-multilingual-r2) — 👍 21
+- [Unlocking asynchronicity in continuous batching](https://huggingface.co/blog/continuous_async) — 👍 41
+- [Building Blocks for Foundation Model Training and Inference on AWS](https://huggingface.co/blog/amazon/foundation-model-building-blocks) — 👍 20
+- [EMO: Pretraining mixture of experts for emergent modularity](https://huggingface.co/blog/allenai/emo) — 👍 33
+- [vLLM V0 to V1: Correctness Before Corrections in RL](https://huggingface.co/blog/ServiceNow-AI/correctness-before-corrections) — 👍 8
